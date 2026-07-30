@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   Trophy, TrendingUp, AlertTriangle, ShieldCheck,
   Clock, Award, Terminal, BrainCircuit, Sparkles, ChevronDown, ChevronUp,
-  ClipboardList
+  MessageSquare
 } from "lucide-react";
 import { SiGithub } from "react-icons/si";
 import { useAuth } from "@/context/auth";
@@ -11,6 +11,7 @@ import { mockChallenges } from "@/data/mock-dashboard";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import StudentQuiz from "./student-quiz";
+import AiMentorChat from "@/components/ai-mentor-chat";
 
 function AiScoreBadge({ score }: { score: number }) {
   const color =
@@ -34,14 +35,43 @@ export default function StudentDashboard() {
   const [tab, setTab] = useState<"labs" | "quizzes">("labs");
   const [expandedHints, setExpandedHints] = useState<string | null>(null);
 
+  // AI Mentor state
+  const [mentorOpen, setMentorOpen] = useState(false);
+  const [activeMentorChallenge, setActiveMentorChallenge] = useState<{
+    id: string; title: string; category: string; difficulty: string;
+  } | null>(null);
+  const [hintCounts, setHintCounts] = useState<Record<string, number>>(() => {
+    try {
+      const stored = localStorage.getItem("cp_hint_counts");
+      return stored ? JSON.parse(stored) : {};
+    } catch { return {}; }
+  });
+
   if (!user) return null;
 
   const totalScore = mockChallenges.reduce((s, c) => s + c.scoreEarned, 0);
   const totalTime  = mockChallenges.filter(c => c.timeSeconds).reduce((s, c) => s + (c.timeSeconds || 0), 0);
-  const totalHints = mockChallenges.reduce((s, c) => s + c.aiHintCount, 0);
+  const totalHints = Object.values(hintCounts).reduce((s, v) => s + v, 0) +
+    mockChallenges.reduce((s, c) => s + c.aiHintCount, 0);
   const completed  = mockChallenges.filter(c => c.status === "Completed").length;
   const hours      = Math.floor(totalTime / 3600);
   const mins       = Math.floor((totalTime % 3600) / 60);
+
+  const openMentor = (challenge: typeof mockChallenges[0]) => {
+    setActiveMentorChallenge({
+      id: challenge.id,
+      title: challenge.title,
+      category: challenge.category,
+      difficulty: challenge.difficulty,
+    });
+    setMentorOpen(true);
+  };
+
+  const handleHintUsed = (challengeId: string, newCount: number) => {
+    const updated = { ...hintCounts, [challengeId]: newCount };
+    setHintCounts(updated);
+    localStorage.setItem("cp_hint_counts", JSON.stringify(updated));
+  };
 
   return (
     <div className="container mx-auto px-6 max-w-7xl">
@@ -137,100 +167,141 @@ export default function StudentDashboard() {
         </motion.div>
       </div>
 
-      {/* Challenges */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <ShieldCheck className="text-primary" /> Labs & Challenges
-        </h2>
-
-        <div className="grid grid-cols-1 gap-3">
-          {mockChallenges.map((challenge, idx) => (
-            <motion.div key={challenge.id}
-              initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.55 + idx * 0.05 }}
-              className="bg-card/50 border border-border/50 rounded-xl overflow-hidden hover:bg-card transition-colors">
-              {/* Main row */}
-              <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="font-semibold">{challenge.title}</h3>
-                    <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium border",
-                      challenge.difficulty === "Easy"   && "bg-success/10 text-success border-success/20",
-                      challenge.difficulty === "Medium" && "bg-warning/10 text-warning border-warning/20",
-                      challenge.difficulty === "Hard"   && "bg-destructive/10 text-destructive border-destructive/20"
-                    )}>{challenge.difficulty}</span>
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md">{challenge.category}</span>
-                    {challenge.status === "Completed" && <AiScoreBadge score={challenge.aiDetectionScore} />}
-                  </div>
-
-                  {challenge.aiHintCount >= 5 && (
-                    <button onClick={() => setExpandedHints(expandedHints === challenge.id ? null : challenge.id)}
-                      className="inline-flex items-center gap-1.5 mt-1 px-2.5 py-1 rounded-md bg-warning/10 border border-warning/30 text-warning text-xs hover:bg-warning/20 transition-colors">
-                      <AlertTriangle size={12} />
-                      AI used {challenge.aiHintCount}x — view questions
-                      {expandedHints === challenge.id ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-5 md:min-w-[280px] justify-between md:justify-end shrink-0">
-                  {challenge.timeTaken && (
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground whitespace-nowrap">
-                      <Clock size={13} /> {challenge.timeTaken}
-                    </div>
-                  )}
-                  <div className="flex flex-col items-end gap-1 min-w-[110px]">
-                    <div className="text-sm font-medium">
-                      {challenge.scoreEarned} <span className="text-muted-foreground">/ {challenge.maxScore} pts</span>
-                    </div>
-                    <Progress value={(challenge.scoreEarned / challenge.maxScore) * 100} className="h-1.5 w-full" />
-                  </div>
-                  <span className={cn("text-sm font-medium whitespace-nowrap",
-                    challenge.status === "Completed"  && "text-success",
-                    challenge.status === "In Progress" && "text-secondary",
-                    challenge.status === "Not Started" && "text-muted-foreground"
-                  )}>{challenge.status}</span>
-                </div>
-              </div>
-
-              {/* Expanded AI hint questions */}
-              {expandedHints === challenge.id && challenge.aiHintQuestions && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                  className="border-t border-border/50 bg-warning/5 px-5 py-4">
-                  <p className="text-xs text-warning font-medium mb-2 flex items-center gap-1">
-                    <Sparkles size={12} /> Questions asked to AI:
-                  </p>
-                  <ul className="space-y-1">
-                    {challenge.aiHintQuestions.map((q, i) => (
-                      <li key={i} className="text-xs text-muted-foreground flex gap-2">
-                        <span className="text-warning shrink-0">{i + 1}.</span> {q}
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              )}
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Career/Portfolio CTA */}
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}
-        className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <TrendingUp size={18} className="text-primary" />
-              <h3 className="font-semibold">Public Portfolio for Employers</h3>
-            </div>
-            <p className="text-sm text-muted-foreground">Your completed labs and scores are synced to your GitHub and visible to recruiters.</p>
-          </div>
-          <button onClick={() => user.githubUsername && window.open(`https://github.com/${user.githubUsername}`, "_blank")}
-            className="shrink-0 px-5 py-2 rounded-xl bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors">
-            View Public Profile
+      {/* Tabs */}
+      <div className="flex gap-1 mb-6 bg-muted/30 p-1 rounded-xl w-fit">
+        {(["labs", "quizzes"] as const).map(t => (
+          <button key={t} onClick={() => setTab(t)}
+            className={cn("px-5 py-2 rounded-lg text-sm font-medium capitalize transition-all",
+              tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}>
+            {t}
           </button>
-        </div>
-      </motion.div>
+        ))}
+      </div>
+
+      {tab === "quizzes" ? (
+        <StudentQuiz />
+      ) : (
+        <>
+          {/* Challenges */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <ShieldCheck className="text-primary" /> Labs & Challenges
+            </h2>
+
+            <div className="grid grid-cols-1 gap-3">
+              {mockChallenges.map((challenge, idx) => {
+                const labHints = (hintCounts[challenge.id] || 0) + challenge.aiHintCount;
+                return (
+                  <motion.div key={challenge.id}
+                    initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.55 + idx * 0.05 }}
+                    className="bg-card/50 border border-border/50 rounded-xl overflow-hidden hover:bg-card transition-colors">
+                    {/* Main row */}
+                    <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3 className="font-semibold">{challenge.title}</h3>
+                          <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium border",
+                            challenge.difficulty === "Easy"   && "bg-success/10 text-success border-success/20",
+                            challenge.difficulty === "Medium" && "bg-warning/10 text-warning border-warning/20",
+                            challenge.difficulty === "Hard"   && "bg-destructive/10 text-destructive border-destructive/20"
+                          )}>{challenge.difficulty}</span>
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md">{challenge.category}</span>
+                          {challenge.status === "Completed" && <AiScoreBadge score={challenge.aiDetectionScore} />}
+                        </div>
+
+                        {labHints >= 5 && (
+                          <button onClick={() => setExpandedHints(expandedHints === challenge.id ? null : challenge.id)}
+                            className="inline-flex items-center gap-1.5 mt-1 px-2.5 py-1 rounded-md bg-warning/10 border border-warning/30 text-warning text-xs hover:bg-warning/20 transition-colors">
+                            <AlertTriangle size={12} />
+                            AI used {labHints}x — view questions
+                            {expandedHints === challenge.id ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3 md:min-w-[320px] justify-between md:justify-end shrink-0">
+                        {challenge.timeTaken && (
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground whitespace-nowrap">
+                            <Clock size={13} /> {challenge.timeTaken}
+                          </div>
+                        )}
+                        <div className="flex flex-col items-end gap-1 min-w-[110px]">
+                          <div className="text-sm font-medium">
+                            {challenge.scoreEarned} <span className="text-muted-foreground">/ {challenge.maxScore} pts</span>
+                          </div>
+                          <Progress value={(challenge.scoreEarned / challenge.maxScore) * 100} className="h-1.5 w-full" />
+                        </div>
+                        <span className={cn("text-sm font-medium whitespace-nowrap",
+                          challenge.status === "Completed"  && "text-success",
+                          challenge.status === "In Progress" && "text-secondary",
+                          challenge.status === "Not Started" && "text-muted-foreground"
+                        )}>{challenge.status}</span>
+
+                        {/* Ask AI Mentor button */}
+                        <button
+                          onClick={() => openMentor(challenge)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-medium hover:bg-primary/20 hover:border-primary/50 transition-all whitespace-nowrap"
+                        >
+                          <MessageSquare size={12} />
+                          Ask AI
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Expanded AI hint questions */}
+                    {expandedHints === challenge.id && challenge.aiHintQuestions && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
+                        className="border-t border-border/50 bg-warning/5 px-5 py-4">
+                        <p className="text-xs text-warning font-medium mb-2 flex items-center gap-1">
+                          <Sparkles size={12} /> Questions asked to AI:
+                        </p>
+                        <ul className="space-y-1">
+                          {challenge.aiHintQuestions.map((q, i) => (
+                            <li key={i} className="text-xs text-muted-foreground flex gap-2">
+                              <span className="text-warning shrink-0">{i + 1}.</span> {q}
+                            </li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Career/Portfolio CTA */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9 }}
+            className="mt-8 p-6 rounded-2xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp size={18} className="text-primary" />
+                  <h3 className="font-semibold">Public Portfolio for Employers</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">Your completed labs and scores are synced to your GitHub and visible to recruiters.</p>
+              </div>
+              <button onClick={() => user.githubUsername && window.open(`https://github.com/${user.githubUsername}`, "_blank")}
+                className="shrink-0 px-5 py-2 rounded-xl bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors">
+                View Public Profile
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+
+      {/* AI Mentor Chat Panel */}
+      {activeMentorChallenge && (
+        <AiMentorChat
+          isOpen={mentorOpen}
+          onClose={() => setMentorOpen(false)}
+          challenge={activeMentorChallenge}
+          initialHintsUsed={hintCounts[activeMentorChallenge.id] || 0}
+          onHintUsed={(count) => handleHintUsed(activeMentorChallenge.id, count)}
+        />
+      )}
     </div>
   );
 }
