@@ -1,0 +1,82 @@
+You are a senior full-stack engineer and AI product architect.
+
+I want you to implement an AI Mentor feature inside my cybersecurity learning platform (CyberPulse).
+
+The AI Mentor must NOT behave like ChatGPT that gives direct answers. Its purpose is to guide students while they solve cybersecurity labs and challenges.
+
+Core requirements:
+
+1. AI Mentor behavior:
+- The AI must act as a cybersecurity instructor/mentor.
+- It must never provide the final answer, flag, exploit payload, or complete solution.
+- It should guide students through hints, explanations, and questions.
+- It should encourage critical thinking and problem solving.
+
+2. Response levels:
+Implement a progressive guidance system:
+
+Level 1: Concept Explanation
+- Explain the related cybersecurity concept.
+- Do not reference the exact solution.
+
+Level 2: Hint
+- Give a small clue about where the student should look.
+- Do not reveal the answer.
+
+Level 3: Guided Questions
+- Ask questions that help the student discover the solution themselves.
+
+Level 4: Blocked Requests
+If the student asks:
+- "Give me the flag"
+- "Give me the answer"
+- "Solve this challenge"
+- "Show me the exploit"
+The AI must refuse and provide guidance instead.
+
+3. Student context awareness:
+The AI should consider:
+- Student level (beginner/intermediate/advanced)
+- Previous attempts
+- Number of hints requested
+- Lab difficulty
+
+Beginners should receive more explanation.
+Advanced students should receive shorter hints and more questions.
+
+4. AI usage tracking:
+Create a system that logs:
+- Student ID
+- Lab ID
+- Time of request
+- Student question
+- AI response level
+- Number of hints used
+
+Use this data for the dashboard.
+
+5. Frontend:
+Create an "Ask AI Mentor" button inside the lab page.
+
+The UI should include:
+- Chat interface
+- Hint level indicator
+- Remaining hints counter (if applicable)
+- Clear message that AI helps learning and does not provide solutions.
+
+6. Backend:
+Create proper API structure for:
+- Sending questions to AI
+- Checking the request type
+- Applying the anti-cheating rules
+- Saving AI interactions
+
+7. Important:
+Do not build a generic chatbot.
+The feature must feel like a cybersecurity mentor integrated into a cyber training platform.
+
+Analyze the existing project structure first.
+Reuse the current architecture and components.
+Do not remove existing features.
+Implement this as an MVP suitable for a hackathon.
+After implementation, run the project and verify that the feature works.
