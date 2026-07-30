@@ -1,20 +1,13 @@
 import { Router } from "express";
-import OpenAI from "openai";
 import { db } from "@workspace/db";
 import { mentorInteractions } from "@workspace/db";
 import { logger } from "../lib/logger";
+import { streamMentorResponse, isMockMode } from "../lib/ai-provider";
 
 const mentorRouter = Router();
 
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY is required");
-}
+// ─── Anti-cheat detection ────────────────────────────────────────────────────
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-const MAX_HINTS = 5;
-
-// Detect if the student is trying to cheat (asking for direct answers/flags)
 function detectCheating(question: string): boolean {
   const cheatingPatterns = [
     /give me the (flag|answer|solution|exploit|payload)/i,
@@ -31,13 +24,15 @@ function detectCheating(question: string): boolean {
   return cheatingPatterns.some((p) => p.test(question));
 }
 
+// ─── System prompt builder (kept here for when OpenAI is re-enabled) ─────────
+
 function buildSystemPrompt(
   challengeTitle: string,
   challengeCategory: string,
   difficulty: string,
   studentName: string,
   studentLevel: string,
-  hintsUsed: number
+  hintsUsed: number,
 ): string {
   const levelGuidance =
     studentLevel === "beginner"
@@ -75,8 +70,10 @@ Response format:
 - Keep responses concise (3-6 sentences max unless explaining a concept).
 - Use markdown formatting for code snippets or commands (but never complete exploits).
 - End with a guiding question when appropriate to prompt deeper thinking.
-- Tone: professional, encouraging, like a knowledgeable mentor who wants the student to succeed through their own effort.`;
+- Tone: professional, encouraging, like a knowledgeable mentor who wants the student to succeed.`;
 }
+
+// ─── POST /mentor/ask ─────────────────────────────────────────────────────────
 
 mentorRouter.post("/mentor/ask", async (req, res) => {
   const {
@@ -106,45 +103,32 @@ mentorRouter.post("/mentor/ask", async (req, res) => {
     return;
   }
 
-  // Determine response level
-  let responseLevel = 1;
+  // ── Determine response level ────────────────────────────────────────────────
   const isCheating = detectCheating(question);
+  const responseLevel = isCheating ? 4 : hintsUsed >= 4 ? 3 : hintsUsed >= 2 ? 2 : 1;
 
-  if (isCheating) {
-    responseLevel = 4;
-  } else if (hintsUsed >= 4) {
-    responseLevel = 3; // Guided questions only
-  } else if (hintsUsed >= 2) {
-    responseLevel = 2; // Hints
-  } else {
-    responseLevel = 1; // Concept explanation
-  }
-
-  // Set up SSE
+  // ── Set SSE headers ─────────────────────────────────────────────────────────
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
   res.setHeader("Access-Control-Allow-Origin", "*");
 
-  // For blocked (cheating) requests, send refusal without calling AI
+  // ── Anti-cheat: blocked response (no AI call) ───────────────────────────────
   if (isCheating) {
     const refusal =
-      "I can't provide the answer, flag, or solution directly — that would defeat the purpose of this challenge and undermine your learning. 🛡️\n\nMy role is to help you **discover** the solution through your own effort.\n\nTry breaking the problem into smaller parts: What do you already know about this type of vulnerability? What tools have you tried so far? Let's work through this step by step.";
+      "I can't provide the answer, flag, or solution directly — that would defeat the purpose of this challenge and undermine your learning. 🛡️\n\n" +
+      "My role is to help you **discover** the solution through your own effort.\n\n" +
+      "Try breaking the problem into smaller parts: What do you already know about this type of vulnerability? What tools have you tried so far? Let's work through this step by step.";
 
     res.write(`data: ${JSON.stringify({ content: refusal, done: false })}\n\n`);
     res.write(`data: ${JSON.stringify({ done: true, responseLevel: 4 })}\n\n`);
 
-    // Log to DB
     try {
       await db.insert(mentorInteractions).values({
-        studentId,
-        studentName,
-        labId: challengeId,
-        labTitle: challengeTitle,
-        question,
-        aiResponse: refusal,
-        responseLevel: 4,
-        hintsUsed,
+        studentId, studentName,
+        labId: challengeId, labTitle: challengeTitle,
+        question, aiResponse: refusal,
+        responseLevel: 4, hintsUsed,
       });
     } catch (err) {
       logger.error({ err }, "Failed to log mentor interaction");
@@ -154,62 +138,51 @@ mentorRouter.post("/mentor/ask", async (req, res) => {
     return;
   }
 
-  const systemPrompt = buildSystemPrompt(
-    challengeTitle,
-    challengeCategory,
-    difficulty,
-    studentName,
-    studentLevel,
-    hintsUsed
-  );
+  // ── Stream response (mock or live OpenAI) ────────────────────────────────────
+  const mode = isMockMode() ? "mock" : "openai";
+  logger.info({ mode, challengeId, hintsUsed }, "Mentor response started");
 
   let fullResponse = "";
 
   try {
-    const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      max_tokens: 512,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: question },
-      ],
-      stream: true,
+    const stream = streamMentorResponse({
+      question,
+      challengeTitle,
+      challengeCategory,
+      difficulty,
+      studentName,
+      studentLevel,
+      hintsUsed,
+      systemPrompt: buildSystemPrompt(challengeTitle, challengeCategory, difficulty, studentName, studentLevel, hintsUsed),
     });
 
     for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        fullResponse += content;
-        res.write(`data: ${JSON.stringify({ content, done: false })}\n\n`);
-      }
+      fullResponse += chunk;
+      res.write(`data: ${JSON.stringify({ content: chunk, done: false })}\n\n`);
     }
 
     res.write(`data: ${JSON.stringify({ done: true, responseLevel })}\n\n`);
 
-    // Log interaction to DB
     try {
       await db.insert(mentorInteractions).values({
-        studentId,
-        studentName,
-        labId: challengeId,
-        labTitle: challengeTitle,
-        question,
-        aiResponse: fullResponse,
-        responseLevel,
-        hintsUsed,
+        studentId, studentName,
+        labId: challengeId, labTitle: challengeTitle,
+        question, aiResponse: fullResponse,
+        responseLevel, hintsUsed,
       });
     } catch (err) {
       logger.error({ err }, "Failed to log mentor interaction");
     }
   } catch (err) {
-    logger.error({ err }, "OpenAI streaming error");
+    logger.error({ err }, "Mentor stream error");
     res.write(`data: ${JSON.stringify({ error: "AI Mentor is temporarily unavailable. Please try again.", done: true })}\n\n`);
   }
 
   res.end();
 });
 
-// Get interactions for a student (for dashboard)
+// ─── GET /mentor/interactions/:studentId ─────────────────────────────────────
+
 mentorRouter.get("/mentor/interactions/:studentId", async (req, res) => {
   try {
     const { studentId } = req.params;
@@ -223,6 +196,12 @@ mentorRouter.get("/mentor/interactions/:studentId", async (req, res) => {
     logger.error({ err }, "Failed to fetch mentor interactions");
     res.status(500).json({ error: "Failed to fetch interactions" });
   }
+});
+
+// ─── GET /mentor/mode (helpful for debugging) ────────────────────────────────
+
+mentorRouter.get("/mentor/mode", (_req, res) => {
+  res.json({ mode: isMockMode() ? "mock" : "openai" });
 });
 
 export default mentorRouter;
