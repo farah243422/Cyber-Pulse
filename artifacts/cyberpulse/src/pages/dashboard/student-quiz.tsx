@@ -26,14 +26,14 @@ function TakeQuiz({ quiz, onDone }: { quiz: Quiz; onDone: () => void }) {
     quiz.timeLimit ? quiz.timeLimit * 60 : null
   );
   useEffect(() => {
-    if (!secondsLeft) return;
-    if (secondsLeft <= 0) { handleSubmit(); return; }
+    if (secondsLeft === null) return;          // no time limit — do nothing
+    if (secondsLeft <= 0) { handleSubmit(); return; } // time's up — auto-submit
     const t = setTimeout(() => setSecondsLeft(s => (s ?? 1) - 1), 1000);
     return () => clearTimeout(t);
   }, [secondsLeft]);
 
   const handleSubmit = () => {
-    if (!user) return;
+    if (!user || submitted) return;   // guard against double-submit (manual + timer)
     const timeSpent = Math.floor((Date.now() - startRef.current) / 1000);
     let score = 0;
     quiz.questions.forEach((q, i) => {
@@ -53,7 +53,9 @@ function TakeQuiz({ quiz, onDone }: { quiz: Quiz; onDone: () => void }) {
   };
 
   const answered = answers.filter(a => a !== null).length;
-  const pct = result ? Math.round((result.score / result.totalPoints) * 100) : 0;
+  const pct = result && result.totalPoints > 0
+    ? Math.round((result.score / result.totalPoints) * 100)
+    : 0;
 
   /* ── Result screen ── */
   if (submitted && result) {
@@ -223,7 +225,9 @@ export default function StudentQuiz() {
           {quizzes.map((quiz, i) => {
             const submission = getStudentSubmission(quiz.id, user.id);
             const totalPts   = quiz.questions.reduce((s, q) => s + q.points, 0);
-            const pct        = submission ? Math.round((submission.score / submission.totalPoints) * 100) : null;
+            const pct        = submission && submission.totalPoints > 0
+              ? Math.round((submission.score / submission.totalPoints) * 100)
+              : null;
 
             return (
               <motion.div key={quiz.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}

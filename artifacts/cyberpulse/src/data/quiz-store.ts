@@ -71,7 +71,10 @@ export function getSubmissions(): QuizSubmission[] {
 }
 
 export function saveSubmission(sub: QuizSubmission): void {
-  const all = getSubmissions();
+  // Replace existing submission for the same quiz+student (prevent duplicates)
+  const all = getSubmissions().filter(
+    s => !(s.quizId === sub.quizId && s.studentId === sub.studentId),
+  );
   all.push(sub);
   localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(all));
 }
