@@ -28,13 +28,10 @@ export default function OnboardingGithub() {
 
   const handleConnect = () => {
     setConnecting(true);
-    // Simulate OAuth delay
+    // Simulate OAuth handshake delay, then let the user enter their real username
     setTimeout(() => {
       setConnecting(false);
       setConnected(true);
-      // Generate a plausible default username based on their name
-      const defaultUsername = user.name.toLowerCase().replace(/\s+/g, '') + Math.floor(Math.random() * 100);
-      setUsername(defaultUsername);
     }, 1500);
   };
 
