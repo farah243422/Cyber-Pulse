@@ -115,28 +115,47 @@ export default function StudentDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {/* GitHub */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          className="bg-card border border-border/50 rounded-2xl p-5 hover:border-primary/40 transition-colors cursor-pointer group"
-          onClick={() => user.githubUsername && window.open(`https://github.com/${user.githubUsername}`, "_blank")}>
+          className="bg-card border border-border/50 rounded-2xl p-5 hover:border-primary/40 transition-colors group">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <SiGithub size={16} /> GitHub Portfolio
             </div>
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
-            </span>
+            {user.githubUsername ? (
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
+              </span>
+            ) : (
+              <span className="text-xs text-muted-foreground">Not connected</span>
+            )}
           </div>
-          <div className="font-mono text-sm text-primary mb-3">github.com/{user.githubUsername || "—"}</div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-background/50 rounded-lg p-3 text-center">
-              <div className="text-xl font-bold">47</div>
-              <div className="text-xs text-muted-foreground mt-1">Commits</div>
-            </div>
-            <div className="bg-background/50 rounded-lg p-3 text-center">
-              <div className="text-xl font-bold">3</div>
-              <div className="text-xs text-muted-foreground mt-1">Projects</div>
-            </div>
-          </div>
+
+          {user.githubUsername ? (
+            <>
+              <a
+                href={`https://github.com/${user.githubUsername}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-sm text-primary mb-3 block hover:underline"
+              >
+                github.com/{user.githubUsername}
+              </a>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-background/50 rounded-lg p-3 text-center">
+                  <div className="text-xl font-bold">47</div>
+                  <div className="text-xs text-muted-foreground mt-1">Commits</div>
+                </div>
+                <div className="bg-background/50 rounded-lg p-3 text-center">
+                  <div className="text-xl font-bold">3</div>
+                  <div className="text-xs text-muted-foreground mt-1">Projects</div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No GitHub account linked. Connect one during onboarding to display your portfolio here.
+            </p>
+          )}
         </motion.div>
 
         {/* AI Usage Summary */}
@@ -283,10 +302,20 @@ export default function StudentDashboard() {
                 </div>
                 <p className="text-sm text-muted-foreground">Your completed labs and scores are synced to your GitHub and visible to recruiters.</p>
               </div>
-              <button onClick={() => user.githubUsername && window.open(`https://github.com/${user.githubUsername}`, "_blank")}
-                className="shrink-0 px-5 py-2 rounded-xl bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors">
-                View Public Profile
-              </button>
+              {user.githubUsername ? (
+                <a
+                  href={`https://github.com/${user.githubUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="shrink-0 px-5 py-2 rounded-xl bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors"
+                >
+                  View Public Profile
+                </a>
+              ) : (
+                <span className="shrink-0 px-5 py-2 rounded-xl bg-muted text-muted-foreground font-medium text-sm cursor-not-allowed">
+                  No GitHub linked
+                </span>
+              )}
             </div>
           </motion.div>
         </>
