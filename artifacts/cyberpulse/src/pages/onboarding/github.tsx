@@ -1,10 +1,9 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
+import { useEffect, useState } from "react";
+import { useLocation, useSearch } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowRight, Check, Loader2, ExternalLink } from "lucide-react";
+import { ArrowRight, Check, Loader2, ExternalLink, AlertCircle } from "lucide-react";
 import { SiGithub } from "react-icons/si";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/auth";
 import { useProtectedRoute } from "@/hooks/use-routes";
 import { cn } from "@/lib/utils";
@@ -13,10 +12,44 @@ export default function OnboardingGithub() {
   const { user, isLoading } = useProtectedRoute("/register");
   const [, setLocation] = useLocation();
   const { updateUser } = useAuth();
-  
-  const [connecting, setConnecting] = useState(false);
+  const search = useSearch();
+
   const [connected, setConnected] = useState(false);
-  const [username, setUsername] = useState("");
+  const [githubLogin, setGithubLogin] = useState("");
+  const [githubAvatar, setGithubAvatar] = useState("");
+  const [githubHtmlUrl, setGithubHtmlUrl] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  // Parse callback query params injected by the backend after OAuth redirect
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const status = params.get("github_status");
+    const ghError = params.get("github_error");
+
+    if (status === "success") {
+      const login   = params.get("github_login")    ?? "";
+      const avatar  = params.get("github_avatar")   ?? "";
+      const htmlUrl = params.get("github_html_url") ?? "";
+      setGithubLogin(login);
+      setGithubAvatar(avatar);
+      setGithubHtmlUrl(htmlUrl);
+      setConnected(true);
+      // Clean up query params from the URL without triggering a re-render loop
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (ghError) {
+      const messages: Record<string, string> = {
+        access_denied:   "GitHub authorization was cancelled.",
+        state_mismatch:  "Security check failed. Please try again.",
+        token_error:     "Failed to exchange authorization code. Please try again.",
+        profile_error:   "Failed to fetch your GitHub profile. Please try again.",
+        invalid_profile: "Could not read GitHub profile. Please try again.",
+        config:          "GitHub OAuth is not configured on this server.",
+        server_error:    "An unexpected error occurred. Please try again.",
+      };
+      setError(messages[ghError] ?? "GitHub connection failed. Please try again.");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [search]);
 
   if (isLoading || !user) return null;
 
@@ -27,19 +60,15 @@ export default function OnboardingGithub() {
   }
 
   const handleConnect = () => {
-    setConnecting(true);
-    // Simulate OAuth handshake delay, then let the user enter their real username
-    setTimeout(() => {
-      setConnecting(false);
-      setConnected(true);
-    }, 1500);
+    // Full-page redirect to the backend GitHub OAuth initiation endpoint
+    window.location.href = "/api/auth/github";
   };
 
   const handleNext = () => {
-    if (connected && username) {
-      updateUser({ 
+    if (connected && githubLogin) {
+      updateUser({
         githubConnected: true,
-        githubUsername: username 
+        githubUsername:  githubLogin,
       });
       setLocation("/onboarding/confirmation");
     }
@@ -85,25 +114,26 @@ export default function OnboardingGithub() {
           </div>
 
           <div className="bg-card/50 border border-border/50 rounded-2xl p-8 backdrop-blur-sm shadow-xl">
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-3 p-4 rounded-xl border border-destructive/30 bg-destructive/5 mb-4 text-left"
+              >
+                <AlertCircle size={20} className="text-destructive shrink-0" />
+                <p className="text-sm text-destructive">{error}</p>
+              </motion.div>
+            )}
+
             {!connected ? (
               <div className="flex flex-col items-center">
                 <Button 
                   size="lg" 
                   onClick={handleConnect} 
-                  disabled={connecting}
                   className="w-full h-14 text-base relative overflow-hidden group bg-white text-black hover:bg-gray-200"
                 >
-                  {connecting ? (
-                    <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Connecting to GitHub...
-                    </>
-                  ) : (
-                    <>
-                      <SiGithub className="mr-3 h-5 w-5" />
-                      Connect GitHub Account
-                    </>
-                  )}
+                  <SiGithub className="mr-3 h-5 w-5" />
+                  Connect GitHub Account
                 </Button>
                 <p className="mt-4 text-xs text-muted-foreground">
                   By connecting, you allow CyberPulse to create a dedicated repository for your achievements.
@@ -116,38 +146,30 @@ export default function OnboardingGithub() {
                 className="flex flex-col space-y-4 text-left"
               >
                 <div className="flex items-center gap-3 p-4 rounded-xl border border-success/30 bg-success/5 mb-2">
-                  <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center text-success">
-                    <Check size={20} />
+                  <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center text-success overflow-hidden">
+                    {githubAvatar ? (
+                      <img src={githubAvatar} alt={githubLogin} className="w-full h-full object-cover rounded-full" />
+                    ) : (
+                      <Check size={20} />
+                    )}
                   </div>
                   <div>
                     <p className="font-semibold text-success">Account Linked Successfully</p>
-                    <p className="text-xs text-muted-foreground">CyberPulse is authorized.</p>
+                    <p className="text-xs text-muted-foreground">@{githubLogin}</p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">GitHub Username</label>
-                    <Input 
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="h-12 bg-background border-border"
-                      placeholder="Enter your username"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Confirm your username so we can display your profile link.
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground">Profile Link</label>
-                    <div className="flex items-center gap-2 h-12 px-3 rounded-md border border-border bg-muted/30 text-muted-foreground text-sm overflow-hidden">
-                      <ExternalLink size={16} className="shrink-0" />
-                      <span className="truncate">
-                        github.com/{username || "username"}
-                      </span>
-                    </div>
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Profile Link</label>
+                  <a
+                    href={githubHtmlUrl || `https://github.com/${githubLogin}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 h-12 px-3 rounded-md border border-border bg-muted/30 text-muted-foreground text-sm overflow-hidden hover:text-foreground transition-colors"
+                  >
+                    <ExternalLink size={16} className="shrink-0" />
+                    <span className="truncate">github.com/{githubLogin}</span>
+                  </a>
                 </div>
               </motion.div>
             )}
@@ -164,7 +186,7 @@ export default function OnboardingGithub() {
             <Button 
               size="lg" 
               onClick={handleNext} 
-              disabled={!connected || !username}
+              disabled={!connected || !githubLogin}
               className={cn("h-12 px-8 group", connected ? "glow-primary" : "")}
             >
               Complete Setup
