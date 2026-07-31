@@ -1,10 +1,12 @@
-# [Project name]
+# CyberPulse
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A student career-readiness platform with Google OAuth login, university/major onboarding, and an AI-powered dashboard.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- API workflow: `artifacts/api-server: API Server` — `PORT=8080 pnpm --filter @workspace/api-server run dev`
+- Frontend workflow: `artifacts/cyberpulse: web` — `PORT=20384 BASE_PATH=/ pnpm --filter @workspace/cyberpulse run dev`
+- `pnpm --filter @workspace/api-server run dev` — run the API server manually (port 8080)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
