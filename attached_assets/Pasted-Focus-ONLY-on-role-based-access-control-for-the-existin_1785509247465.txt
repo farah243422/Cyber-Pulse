@@ -1,0 +1,36 @@
+Focus ONLY on role-based access control for the existing CyberPulse application.
+
+The requirement is:
+
+* Students must ONLY have access to the Student experience.
+* Instructors/Doctors must ONLY have access to the Instructor/Doctor experience.
+* A Student must NEVER be able to access the Instructor/Doctor dashboard, quiz management, quiz creation/editing, publishing, or student submissions/results management.
+* An Instructor/Doctor must have access to the Instructor/Doctor features that already exist.
+* Do not allow users to bypass role restrictions by manually entering URLs or navigating directly to protected routes.
+
+Please inspect the existing authentication and role system and determine how the application currently identifies whether a user is a Student or Instructor/Doctor.
+
+Then implement or fix the minimum necessary role-based access control so that:
+
+1. After login, each user is automatically redirected to the correct dashboard based on their role.
+2. Students are redirected to the Student dashboard and cannot access Instructor/Doctor routes or pages.
+3. Instructors/Doctors are redirected to the Instructor/Doctor dashboard and can access their existing management features.
+4. If a Student tries to access an Instructor/Doctor URL directly, block access and redirect them to the Student dashboard or show an appropriate "Access Denied" message.
+5. Hide Instructor/Doctor-only navigation links and buttons from Students.
+6. Ensure the protection is enforced in the actual application logic/routes, not only by hiding UI elements.
+7. Do not change the existing quiz functionality that was already fixed.
+8. Do not modify Google Login or unrelated features.
+9. Do not rebuild the authentication system from scratch.
+10. Make only the minimum necessary changes.
+
+Test both roles end-to-end:
+
+* Student login → Student dashboard → Student features → attempt to access Instructor/Doctor page → access must be denied.
+* Instructor/Doctor login → Instructor/Doctor dashboard → Instructor/Doctor features must work normally.
+
+At the end, give me a concise summary of:
+
+1. How roles are currently determined.
+2. What role-based access issues you found.
+3. What you fixed.
+4. Confirm that Students can no longer access Instructor/Doctor features or routes.

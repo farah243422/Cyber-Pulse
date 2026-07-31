@@ -11,6 +11,7 @@ import {
 } from "@/data/quiz-store";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/auth";
+import { useRoleRoute } from "@/hooks/use-routes";
 
 /* ─── tiny helpers ─────────────────────────────────────────────────────────── */
 function AiScore({ score }: { score: number }) {
@@ -319,7 +320,9 @@ function SubmissionsModal({ quiz, onClose }: { quiz: Quiz; onClose: () => void }
 
 /* ─── Main Component ────────────────────────────────────────────────────────── */
 export default function InstructorQuiz() {
-  const { user } = useAuth();
+  // Role guard: non-Instructor users are redirected before any quiz
+  // management data or UI is rendered.
+  const { user, isLoading, hasRole } = useRoleRoute("Instructor");
   const [quizzes, setQuizzes]       = useState<Quiz[]>([]);
   const [editing, setEditing]       = useState<Quiz | null>(null);
   const [viewing, setViewing]       = useState<Quiz | null>(null);
@@ -327,7 +330,7 @@ export default function InstructorQuiz() {
   const load = () => setQuizzes(getQuizzes());
   useEffect(load, []);
 
-  if (!user) return null;
+  if (isLoading || !user || !hasRole) return null;
 
   const handleSave = (quiz: Quiz) => {
     saveQuiz(quiz); load(); setEditing(null);

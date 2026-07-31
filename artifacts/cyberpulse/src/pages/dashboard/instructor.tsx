@@ -5,7 +5,7 @@ import {
   GraduationCap, Clock, Github, ChevronDown, ChevronUp,
   Download, Search, AlertTriangle, Sparkles, TrendingUp, BookOpen
 } from "lucide-react";
-import { useAuth } from "@/context/auth";
+import { useRoleRoute } from "@/hooks/use-routes";
 import { mockStudents, type StudentRow } from "@/data/mock-dashboard";
 import { cn } from "@/lib/utils";
 import InstructorQuiz from "./instructor-quiz";
@@ -99,12 +99,16 @@ function StudentDetailPanel({ student }: { student: StudentRow }) {
 
 /* ── Main component ────────────────────────────────────────────────────────── */
 export default function InstructorDashboard() {
-  const { user } = useAuth();
+  // Role guard: students are immediately redirected to /dashboard.
+  // This is the second line of defence after the conditional render in
+  // dashboard/index.tsx — it ensures no code in this component runs for
+  // non-Instructor users even if the component is somehow mounted directly.
+  const { user, isLoading, hasRole } = useRoleRoute("Instructor");
   const [tab,      setTab]        = useState<"students" | "quizzes">("students");
   const [expanded, setExpanded]   = useState<string | null>(null);
   const [search,   setSearch]     = useState("");
 
-  if (!user) return null;
+  if (isLoading || !user || !hasRole) return null;
 
   const lastName = user.name.split(" ").pop() || user.name;
 
