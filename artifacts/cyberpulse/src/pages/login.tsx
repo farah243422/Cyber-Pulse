@@ -5,8 +5,8 @@ import { Terminal, Shield, Lock, Mail, ArrowRight, AlertCircle } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useAuth } from "@/context/auth";
+import GoogleSignInButton from "@/components/google-sign-in-button";
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -27,7 +27,6 @@ export default function Login() {
     setError("");
     setLoading(true);
 
-    // Small delay for UX feel
     setTimeout(() => {
       const result = login(email, password);
       setLoading(false);
@@ -41,7 +40,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Visual left panel */}
+      {/* ── Visual left panel ─────────────────────────────────────────────── */}
       <div className="hidden md:flex w-1/2 bg-card relative overflow-hidden items-center justify-center border-r border-border">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#111827_1px,transparent_1px),linear-gradient(to_bottom,#111827_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
         <div className="absolute w-full h-full bg-gradient-to-b from-primary/10 to-transparent opacity-50" />
@@ -71,7 +70,7 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Form right panel */}
+      {/* ── Form right panel ──────────────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative">
         <Link href="/" className="absolute top-8 left-6 md:hidden inline-flex items-center gap-2 text-foreground">
           <Terminal size={24} className="text-primary" />
@@ -89,6 +88,22 @@ export default function Login() {
             <p className="text-muted-foreground">Enter your credentials to access your terminal.</p>
           </div>
 
+          {/* ── Google Sign-In ─────────────────────────────────────────────── */}
+          <GoogleSignInButton label="Continue with Google" origin="login" />
+
+          {/* ── Divider ────────────────────────────────────────────────────── */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border/60" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-3 text-muted-foreground tracking-wider">
+                or continue with email
+              </span>
+            </div>
+          </div>
+
+          {/* ── Email / password form ──────────────────────────────────────── */}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>

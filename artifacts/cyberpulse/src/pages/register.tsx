@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth, Role } from "@/context/auth";
 import { cn } from "@/lib/utils";
+import GoogleSignInButton from "@/components/google-sign-in-button";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -55,7 +56,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Visual left panel */}
+      {/* ── Visual left panel ─────────────────────────────────────────────── */}
       <div className="hidden md:flex w-1/2 bg-card relative overflow-hidden items-center justify-center border-r border-border">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#111827_1px,transparent_1px),linear-gradient(to_bottom,#111827_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
         <div className="absolute w-full h-full bg-gradient-to-b from-secondary/10 to-transparent opacity-50" />
@@ -93,7 +94,7 @@ export default function Register() {
         </div>
       </div>
 
-      {/* Form right panel */}
+      {/* ── Form right panel ──────────────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-12 relative">
         <Link href="/" className="absolute top-8 left-6 md:hidden inline-flex items-center gap-2 text-foreground">
           <Terminal size={24} className="text-primary" />
@@ -111,6 +112,22 @@ export default function Register() {
             <p className="text-muted-foreground">Initialize your CyberPulse identity.</p>
           </div>
 
+          {/* ── Google Sign-Up ─────────────────────────────────────────────── */}
+          <GoogleSignInButton label="Sign up with Google" origin="register" />
+
+          {/* ── Divider ────────────────────────────────────────────────────── */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border/60" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-3 text-muted-foreground tracking-wider">
+                or register with email
+              </span>
+            </div>
+          </div>
+
+          {/* ── Email / password form ──────────────────────────────────────── */}
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Role selector */}
             <div className="grid grid-cols-2 gap-4 mb-2">

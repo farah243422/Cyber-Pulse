@@ -10,6 +10,7 @@ import Splash from '@/pages/splash';
 import Home from '@/pages/home';
 import Login from '@/pages/login';
 import Register from '@/pages/register';
+import AuthCallback from '@/pages/auth-callback';
 import OnboardingUniversity from '@/pages/onboarding/university';
 import OnboardingUniversityPlan from '@/pages/onboarding/university-plan';
 import OnboardingMajor from '@/pages/onboarding/major';
@@ -26,6 +27,8 @@ function Router() {
       <Route path="/home" component={Home} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      {/* OAuth 2.0 callback — Google redirects here after authentication */}
+      <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/onboarding/university" component={OnboardingUniversity} />
       <Route path="/onboarding/university/:universityId" component={OnboardingUniversityPlan} />
