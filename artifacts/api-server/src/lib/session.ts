@@ -17,6 +17,7 @@ declare module "express-session" {
     user?: OAuthUser;
     oauthState?: string;
     oauthOrigin?: "login" | "register";   // which page initiated the flow
+    githubOAuthState?: string;            // CSRF token for GitHub account-linking flow
   }
 }
 

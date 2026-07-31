@@ -1,0 +1,41 @@
+Implement a real GitHub OAuth integration for the existing CyberPulse project.
+
+The current GitHub onboarding flow is only simulated: the user manually enters a GitHub username. Replace this with a real GitHub OAuth authentication flow.
+
+Requirements:
+
+1. When a student clicks "Connect GitHub Account", start a real GitHub OAuth authorization flow.
+2. Redirect the user to GitHub's official authorization page.
+3. Request only the minimum required permissions/scopes needed to identify the GitHub account and retrieve the user's public profile information.
+4. After successful authorization, handle the OAuth callback securely.
+5. Retrieve the authenticated user's real GitHub username, profile URL, avatar, and public profile information from GitHub.
+6. Save the GitHub account information to the existing user's profile/session using the existing project data structure.
+7. Update the Student Profile/Dashboard GitHub card to display the real connected GitHub account.
+8. The "View Public Profile" button must link to the authenticated user's actual GitHub profile.
+9. If GitHub OAuth is cancelled or fails, show a clear error message and do not mark the account as connected.
+10. Add a "Disconnect GitHub Account" option if the existing UI structure supports it, and clear the stored GitHub connection data when disconnected.
+11. Use environment variables/secrets for GitHub OAuth credentials. Never hardcode the Client ID or Client Secret in the source code.
+12. Do not expose the GitHub Client Secret to the frontend.
+13. Keep the existing CyberPulse UI and design unchanged.
+14. Do not rebuild the authentication system or modify Google Login.
+15. Do not modify the quiz system, role-based access control, or unrelated features.
+16. Reuse the existing GitHub onboarding and profile components wherever possible instead of creating duplicate components.
+
+Important:
+
+* Inspect the existing authentication, onboarding, user profile, and GitHub-related code first.
+* Make the minimum necessary changes.
+* Do not use fake usernames or randomly generated GitHub usernames anymore.
+* The GitHub username must come directly from the authenticated GitHub OAuth account.
+* Make sure the OAuth state/CSRF protection is implemented correctly.
+* Ensure the OAuth callback URL is configurable through an environment variable.
+* After implementation, test the complete flow end-to-end:
+
+Student → Connect GitHub Account → GitHub Authorization → Approve → OAuth Callback → GitHub Profile Retrieved → Real GitHub Username Saved → Student Dashboard Updated → View Public Profile opens the correct GitHub account.
+
+At the end, give me a concise summary of:
+
+1. What files you changed.
+2. What environment variables/secrets I need to add.
+3. What GitHub OAuth callback URL I need to register in GitHub Developer Settings.
+4. Whether the complete GitHub OAuth flow was tested successfully.
