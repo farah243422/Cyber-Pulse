@@ -12,19 +12,14 @@ export default function OnboardingConfirmation() {
   const [, setLocation] = useLocation();
   const { updateUser } = useAuth();
 
-  // Route guard
+  // Mark onboarding as completed
   useEffect(() => {
-    if (!isLoading && user) {
-      if (!user.githubConnected) {
-        setLocation("/onboarding/github");
-      } else if (!user.onboardingCompleted) {
-        // Mark onboarding as completed
-        updateUser({ onboardingCompleted: true });
-      }
+    if (!isLoading && user && !user.onboardingCompleted) {
+      updateUser({ onboardingCompleted: true });
     }
-  }, [user, isLoading, setLocation, updateUser]);
+  }, [user, isLoading, updateUser]);
 
-  if (isLoading || !user || !user.githubConnected) return null;
+  if (isLoading || !user) return null;
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
@@ -88,13 +83,15 @@ export default function OnboardingConfirmation() {
               <span className="text-muted-foreground text-sm font-mono uppercase">Discipline</span>
               <span className="font-medium">{user.major}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground text-sm font-mono uppercase flex items-center gap-2">
-                <SiGithub className="text-muted-foreground" />
-                Portfolio
-              </span>
-              <span className="font-medium font-mono text-sm">github.com/{user.githubUsername}</span>
-            </div>
+            {user.githubConnected && user.githubUsername && (
+              <div className="flex justify-between items-center">
+                <span className="text-muted-foreground text-sm font-mono uppercase flex items-center gap-2">
+                  <SiGithub className="text-muted-foreground" />
+                  Portfolio
+                </span>
+                <span className="font-medium font-mono text-sm">github.com/{user.githubUsername}</span>
+              </div>
+            )}
           </div>
 
           <motion.div

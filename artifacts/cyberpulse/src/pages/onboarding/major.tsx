@@ -23,7 +23,7 @@ export default function OnboardingMajor() {
 
   const handleNext = () => {
     updateUser({ major: selected });
-    setLocation("/onboarding/github");
+    setLocation("/onboarding/confirmation");
   };
 
   return (
