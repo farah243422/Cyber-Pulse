@@ -15,6 +15,7 @@ import OnboardingUniversity from '@/pages/onboarding/university';
 import OnboardingUniversityPlan from '@/pages/onboarding/university-plan';
 import OnboardingMajor from '@/pages/onboarding/major';
 import OnboardingGithub from '@/pages/onboarding/github';
+import OnboardingInstructor from '@/pages/onboarding/instructor';
 import OnboardingConfirmation from '@/pages/onboarding/confirmation';
 import Dashboard from '@/pages/dashboard';
 
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/onboarding/university/:universityId" component={OnboardingUniversityPlan} />
       <Route path="/onboarding/major" component={OnboardingMajor} />
       <Route path="/onboarding/github" component={OnboardingGithub} />
+      <Route path="/onboarding/instructor" component={OnboardingInstructor} />
       <Route path="/onboarding/confirmation" component={OnboardingConfirmation} />
       <Route component={NotFound} />
     </Switch>

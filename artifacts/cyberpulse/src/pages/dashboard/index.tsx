@@ -14,10 +14,18 @@ export default function DashboardIndex() {
       if (!user) {
         setLocation("/register");
       } else if (!user.onboardingCompleted) {
-        if (!user.university)      setLocation("/onboarding/university");
-        else if (!user.major)      setLocation("/onboarding/major");
-        else if (!user.githubConnected) setLocation("/onboarding/github");
-        else                       setLocation("/onboarding/confirmation");
+        if (user.role === "Instructor") {
+          // Instructors only need a university to complete onboarding
+          if (!user.university) setLocation("/onboarding/instructor");
+          else setLocation("/onboarding/confirmation");
+        } else {
+          // Students need university + studyPlan + major
+          if (!user.university || !user.studyPlan || !user.major) {
+            setLocation("/onboarding/university");
+          } else {
+            setLocation("/onboarding/confirmation");
+          }
+        }
       }
     }
   }, [user, isLoading, setLocation]);

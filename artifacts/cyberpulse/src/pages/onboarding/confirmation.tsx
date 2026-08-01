@@ -21,11 +21,13 @@ export default function OnboardingConfirmation() {
 
   if (isLoading || !user) return null;
 
+  const isInstructor = user.role === "Instructor";
+
   return (
     <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
-      {/* Top Progress Bar - Step 5 of 5 (100%) */}
+      {/* Top Progress Bar - 100% */}
       <div className="w-full h-1 bg-card">
-        <motion.div 
+        <motion.div
           initial={{ width: "80%" }}
           animate={{ width: "100%" }}
           className="h-full bg-success"
@@ -37,7 +39,7 @@ export default function OnboardingConfirmation() {
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#111827_1px,transparent_1px),linear-gradient(to_bottom,#111827_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-30" />
 
       <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -60,37 +62,52 @@ export default function OnboardingConfirmation() {
             </motion.div>
           </div>
 
-          <h1 className="text-4xl font-bold mb-4 tracking-tight">Identity Confirmed</h1>
+          <h1 className="text-4xl font-bold mb-4 tracking-tight">Profile Confirmed</h1>
           <p className="text-xl text-muted-foreground mb-10 leading-relaxed">
             Welcome to <span className="text-foreground font-semibold">CyberPulse</span>, {user.name.split(' ')[0]}.<br/>
             Your profile is fully initialized and synced.
           </p>
 
           <div className="bg-card/50 border border-border/50 rounded-2xl p-6 text-left mb-10 mx-auto backdrop-blur-sm shadow-xl">
+            {/* Role — always shown */}
             <div className="flex justify-between items-center border-b border-border/50 pb-4 mb-4">
               <span className="text-muted-foreground text-sm font-mono uppercase">Role</span>
               <span className="font-medium text-primary">{user.role}</span>
             </div>
-            <div className="flex justify-between items-center border-b border-border/50 pb-4 mb-4">
-              <span className="text-muted-foreground text-sm font-mono uppercase">Institution</span>
-              <span className="font-medium truncate max-w-[200px] text-right" title={user.university}>{user.university}</span>
-            </div>
-            <div className="flex justify-between items-center border-b border-border/50 pb-4 mb-4">
-              <span className="text-muted-foreground text-sm font-mono uppercase">Study Plan</span>
-              <span className="font-medium text-secondary">{user.studyPlan}</span>
-            </div>
-            <div className="flex justify-between items-center border-b border-border/50 pb-4 mb-4">
-              <span className="text-muted-foreground text-sm font-mono uppercase">Discipline</span>
-              <span className="font-medium">{user.major}</span>
-            </div>
-            {user.githubConnected && user.githubUsername && (
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground text-sm font-mono uppercase flex items-center gap-2">
-                  <SiGithub className="text-muted-foreground" />
-                  Portfolio
-                </span>
-                <span className="font-medium font-mono text-sm">github.com/{user.githubUsername}</span>
+
+            {/* Institution — always shown */}
+            {user.university && (
+              <div className={`flex justify-between items-center ${isInstructor ? "" : "border-b border-border/50 pb-4 mb-4"}`}>
+                <span className="text-muted-foreground text-sm font-mono uppercase">Institution</span>
+                <span className="font-medium truncate max-w-[200px] text-right" title={user.university}>{user.university}</span>
               </div>
+            )}
+
+            {/* Student-only fields */}
+            {!isInstructor && (
+              <>
+                {user.studyPlan && (
+                  <div className="flex justify-between items-center border-b border-border/50 pb-4 mb-4">
+                    <span className="text-muted-foreground text-sm font-mono uppercase">Study Plan</span>
+                    <span className="font-medium text-secondary">{user.studyPlan}</span>
+                  </div>
+                )}
+                {user.major && (
+                  <div className={`flex justify-between items-center ${user.githubConnected ? "border-b border-border/50 pb-4 mb-4" : ""}`}>
+                    <span className="text-muted-foreground text-sm font-mono uppercase">Discipline</span>
+                    <span className="font-medium">{user.major}</span>
+                  </div>
+                )}
+                {user.githubConnected && user.githubUsername && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground text-sm font-mono uppercase flex items-center gap-2">
+                      <SiGithub className="text-muted-foreground" />
+                      Portfolio
+                    </span>
+                    <span className="font-medium font-mono text-sm">github.com/{user.githubUsername}</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -99,8 +116,8 @@ export default function OnboardingConfirmation() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1 }}
           >
-            <Button 
-              size="lg" 
+            <Button
+              size="lg"
               onClick={() => setLocation("/dashboard")}
               className="h-14 px-10 text-lg glow-primary group"
             >

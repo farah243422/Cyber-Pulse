@@ -1,0 +1,123 @@
+I want to redesign the onboarding flow while preserving all existing authentication, routing, and functionality.
+
+IMPORTANT: Make minimal, targeted changes. Do not break or rename existing routes, paths, authentication logic, protected routes, or dashboard navigation.
+
+### 1. Student and Instructor must have DIFFERENT onboarding flows
+
+The user selects their role when creating their account:
+
+* Student
+* Instructor
+
+The onboarding flow must depend on the selected role.
+
+#### Student onboarding:
+
+Merge the CURRENT student onboarding steps/pages into ONE single onboarding page.
+
+Currently, the student goes through multiple separate pages for:
+
+* University / Institution selection
+* Study Plan / Graduation Year
+* Discipline / Major
+
+Instead, show these student onboarding fields together on one clean page so the student does not feel like they are going through many separate screens.
+
+The single Student onboarding page should contain:
+
+* University / Institution selection
+* Study Plan / Graduation Year selection
+* Discipline / Major selection
+
+Then provide one clear button:
+"Complete Profile"
+
+After completing the required information, show the confirmation state:
+"Profile Confirmed"
+
+Do NOT use "Identity Confirmed" anymore.
+
+The confirmation should show the student's information, such as:
+
+* Role: Student
+* Institution: selected university
+* Study Plan: selected study plan / graduation year
+* Discipline: selected discipline
+
+Then allow the student to continue to the existing Student Dashboard.
+
+### 2. Instructor onboarding must remain SEPARATE
+
+Do NOT force instructors to go through the same onboarding steps as students.
+
+The Instructor onboarding should have its own flow and its own relevant information.
+
+Before changing the Instructor onboarding, inspect the existing Instructor-related pages, routes, and components first.
+
+Do NOT assume that instructors need:
+
+* Student university selection
+* Student study plan
+* Student discipline selection
+
+Instead, preserve or adapt the Instructor onboarding based on the existing Instructor functionality and information already present in the project.
+
+The final flow should conceptually be:
+
+Student:
+Create Account → Select Student → Student Onboarding (ONE page) → Profile Confirmed → Student Dashboard
+
+Instructor:
+Create Account → Select Instructor → Instructor-specific Onboarding → Profile Confirmed → Instructor Dashboard
+
+### 3. VERY IMPORTANT — Preserve routing and paths
+
+Before editing:
+
+* Inspect the current routing structure.
+* Identify all existing onboarding routes and paths.
+* Identify the Student and Instructor dashboard routes.
+* Identify authentication and protected-route logic.
+
+Do NOT break existing routes.
+
+If multiple Student onboarding pages are being merged into one page, update the navigation between them carefully and remove only the unnecessary intermediate steps.
+
+Do not blindly delete routes that may still be referenced elsewhere.
+
+Keep existing paths working wherever possible, or update all references consistently if a route truly becomes unnecessary.
+
+### 4. Do not modify unrelated features
+
+Do not change:
+
+* Login behavior
+* Registration behavior
+* Email/password authentication
+* Google/GitHub authentication
+* Dashboard functionality
+* Existing UI design outside onboarding
+* API functionality
+* Database logic
+* Any unrelated components
+
+### 5. Final verification
+
+After making the changes, verify both flows:
+
+Student:
+Create Account → Student → One-page Student Onboarding → Complete Profile → Profile Confirmed → Student Dashboard
+
+Instructor:
+Create Account → Instructor → Instructor-specific Onboarding → Profile Confirmed → Instructor Dashboard
+
+Make sure:
+
+* The correct onboarding flow is selected based on the user's role.
+* Student onboarding is consolidated into one page.
+* Instructor onboarding is separate.
+* "Identity Confirmed" is replaced with "Profile Confirmed".
+* No existing routing or paths are broken.
+* No unrelated files or features are changed.
+
+Use the minimum necessary code changes to complete this task and avoid unnecessary refactoring.
