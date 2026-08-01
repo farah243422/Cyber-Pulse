@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Terminal, Shield, Lock, Mail, ArrowRight, AlertCircle } from "lucide-react";
@@ -9,17 +9,12 @@ import { useAuth } from "@/context/auth";
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const { login, user } = useAuth();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // Already logged in → go to dashboard
-  useEffect(() => {
-    if (user) setLocation("/dashboard");
-  }, [user]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

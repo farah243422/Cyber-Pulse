@@ -1,0 +1,56 @@
+Fix the authentication behavior only. Do not modify unrelated UI or features.
+
+There are two problems:
+
+PROBLEM 1 — Registration and existing email:
+
+* Create Account should allow a user to create a CyberPulse account using their email and a NEW password chosen specifically for CyberPulse.
+* The password does NOT need to match the user's email provider password.
+* However, if the email already exists in the CyberPulse account store, registration must NOT create another account or overwrite the existing account.
+* Instead, show:
+  "An account with this email already exists. Please sign in instead."
+* Keep the existing account and its original password unchanged.
+
+Login behavior:
+
+* If the email exists in CyberPulse and the entered CyberPulse password is wrong, show:
+  "Incorrect password."
+* Do NOT show "No account found" when the email exists but the password is wrong.
+
+PROBLEM 2 — Sign In automatically logs into the current account:
+
+* Clicking "Sign In" from the public/home page must always show the Login form.
+* The Login page must ask for:
+
+  * Email
+  * Password
+* It must NOT automatically log the user into the currently active account.
+* If there is an existing session, do not use that session to bypass the Login form when the user explicitly navigates to /login.
+* The user must be able to enter a different email and password and sign into a different CyberPulse account.
+* Do NOT automatically redirect from /login to the dashboard just because a session already exists.
+* Keep the current session only when the user is already inside the application and navigating between protected pages.
+* If the user clicks Sign Out, clear the current session completely and return to the public homepage.
+* After Sign Out, clicking Sign In must show the email/password form.
+
+Expected behavior:
+
+First account:
+Create Account → New email + New CyberPulse password → Account created → Go to Login → Enter same email + password → Login successful.
+
+Wrong password:
+Existing email + Wrong CyberPulse password → "Incorrect password." → Stay on Login page.
+
+Non-existing email:
+Unknown email → "No account found. Please create an account first." → Stay on Login page.
+
+Existing account registration:
+Existing email → Create Account → Registration rejected → "An account with this email already exists."
+
+Switching accounts:
+Account A is logged in → Click Sign Out → Session cleared → Public homepage → Click Sign In → Login form appears → Enter Account B email + password → Login as Account B.
+
+Important:
+Do not remove or add Google/GitHub authentication.
+Do not modify the visual design.
+Do not modify unrelated features.
+Only fix the authentication logic, session handling, registration validation, and login routing necessary for these behaviors.
