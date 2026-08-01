@@ -153,7 +153,7 @@ export default function Register() {
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Salsabeel Al-Ahmad"
+                  placeholder="Full name"
                   className="pl-10 bg-card/50"
                   value={name}
                   onChange={(e) => { setName(e.target.value); setError(""); }}
