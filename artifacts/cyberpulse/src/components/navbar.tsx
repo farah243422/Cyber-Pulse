@@ -105,7 +105,16 @@ export function Navbar() {
                 )}
               </AnimatePresence>
             </div>
-          ) : null}
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setLocation("/login")}>
+                Sign In
+              </Button>
+              <Button size="sm" onClick={() => setLocation("/register")}>
+                Sign Up
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </nav>
