@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Terminal, LayoutDashboard, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export function Navbar() {
   const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -93,7 +94,7 @@ export function Navbar() {
                         Dashboard
                       </Link>
                       <button
-                        onClick={() => { logout(); setOpen(false); }}
+                        onClick={async () => { await logout(); setOpen(false); setLocation("/"); }}
                         className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors w-full mt-0.5"
                       >
                         <LogOut size={15} />
@@ -105,19 +106,12 @@ export function Navbar() {
               </AnimatePresence>
             </div>
           ) : (
-            <>
-              <Link
-                href="/login"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link href="/register">
-                <Button size="sm" className="ml-4">
-                  Get Started
-                </Button>
-              </Link>
-            </>
+            <Link
+              href="/login"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Sign In
+            </Link>
           )}
         </div>
       </div>
