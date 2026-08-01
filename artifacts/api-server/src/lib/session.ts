@@ -1,27 +1,38 @@
 import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import { pool } from "@workspace/db";
 
-// ── Session user shape ────────────────────────────────────────────────────────
-export interface OAuthUser {
-  id: string;          // "google_<sub>"
+// ── Unified session user ───────────────────────────────────────────────────────
+// Covers both email/password accounts and Google OAuth accounts.
+export interface SessionUser {
+  id: string;
   name: string;
   email: string;
   picture?: string;
-  role?: string;       // determined during onboarding
+  role: string;
+  university?: string;
+  studyPlan?: string;
+  major?: string;
+  githubConnected?: boolean;
+  githubUsername?: string;
   onboardingCompleted?: boolean;
-  provider: "google";
+  provider?: "google";   // only present for Google OAuth users
 }
 
-// ── Augment express-session so TypeScript knows our session shape ─────────────
+// Backwards-compat alias used by the Google OAuth flow in auth.ts
+export type OAuthUser = SessionUser & { provider: "google" };
+
+// ── Augment express-session ────────────────────────────────────────────────────
 declare module "express-session" {
   interface SessionData {
-    user?: OAuthUser;
+    user?: SessionUser;
     oauthState?: string;
-    oauthOrigin?: "login" | "register";   // which page initiated the flow
-    githubOAuthState?: string;            // CSRF token for GitHub account-linking flow
+    oauthOrigin?: "login" | "register";
+    githubOAuthState?: string;
   }
 }
 
-// ── Session middleware ────────────────────────────────────────────────────────
+// ── Session middleware ─────────────────────────────────────────────────────────
 const secret = process.env.SESSION_SECRET;
 if (!secret) {
   throw new Error("SESSION_SECRET env var is required");
@@ -29,7 +40,14 @@ if (!secret) {
 
 const isHttps = !!(process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS);
 
+const PgSession = connectPgSimple(session);
+
 export const sessionMiddleware = session({
+  store: new PgSession({
+    pool,
+    tableName: "user_sessions",
+    createTableIfMissing: true,
+  }),
   name: "cp_session",
   secret,
   resave: false,
