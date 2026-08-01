@@ -43,8 +43,12 @@ export default function Register() {
       if (!result.success) {
         setError(result.error || "Registration failed.");
       } else {
-        // Account saved — redirect to login so the user signs in with credentials
-        setLocation("/login");
+        // Auto-logged in — redirect directly to the correct onboarding flow
+        if (role === "Instructor") {
+          setLocation("/onboarding/instructor");
+        } else {
+          setLocation("/onboarding/university");
+        }
       }
     }, 600);
   };
@@ -103,8 +107,8 @@ export default function Register() {
           className="w-full max-w-md"
         >
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Create Profile</h1>
-            <p className="text-muted-foreground">Initialize your CyberPulse identity.</p>
+            <h1 className="text-3xl font-bold mb-2">Sign Up</h1>
+            <p className="text-muted-foreground">Create your CyberPulse account.</p>
           </div>
 
           {/* ── Email / password form ──────────────────────────────────────── */}
@@ -236,11 +240,11 @@ export default function Register() {
               {loading ? (
                 <span className="flex items-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                  Creating profile...
+                  Creating account...
                 </span>
               ) : (
                 <>
-                  Initialize Profile
+                  Sign Up
                   <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </>
               )}

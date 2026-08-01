@@ -96,15 +96,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ── Email / password registration ────────────────────────────────────────────
-  // Saves the account to the user store but does NOT create a session.
-  // The user must sign in explicitly after registering.
+  // Saves the account to the user store AND creates a session immediately so
+  // the user is auto-logged in after sign-up (no second login required).
   const register = (userData: User & { password: string }): { success: boolean; error?: string } => {
     const users = getStoredUsers();
     const exists = users.find((u) => u.email.toLowerCase() === userData.email.toLowerCase());
     if (exists) {
-      return { success: false, error: 'An account with this email already exists.' };
+      return { success: false, error: 'An account with this email already exists. Please sign in instead.' };
     }
     saveStoredUsers([...users, { ...userData }]);
+    // Auto-login: start a session immediately after registration
+    const { password: _pw, ...sessionData } = userData;
+    setUser(sessionData);
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
     return { success: true };
   };
 

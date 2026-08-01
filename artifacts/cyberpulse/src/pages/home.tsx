@@ -96,7 +96,7 @@ export default function Home() {
             >
               <Link href="/register">
                 <Button size="lg" className="w-full sm:w-auto text-base h-14 px-8 glow-primary">
-                  Create Account
+                  Sign Up
                 </Button>
               </Link>
               <Link href="/login">

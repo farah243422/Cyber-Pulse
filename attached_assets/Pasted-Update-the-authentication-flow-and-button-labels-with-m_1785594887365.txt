@@ -1,0 +1,95 @@
+Update the authentication flow and button labels with minimal changes. Do not modify unrelated features, UI sections, or routing.
+
+### 1. Change the registration flow
+
+Currently:
+Create Account → Sign In → Onboarding
+
+Change it to:
+
+Sign Up → Account Created Successfully → Automatic Login → Role-Based Onboarding
+
+After a user successfully creates a new account:
+
+* Automatically create the authenticated session.
+* Do NOT redirect the user to the Login page.
+* Do NOT require the user to enter their email and password a second time.
+* Redirect the user directly to the correct onboarding flow based on their selected role.
+
+Student:
+Sign Up → Auto Login → Student Onboarding → Profile Confirmed → Student Dashboard
+
+Instructor:
+Sign Up → Auto Login → Instructor Onboarding → Profile Confirmed → Instructor Dashboard
+
+IMPORTANT:
+
+* Auto-login should happen ONLY immediately after a successful account registration.
+* Do NOT auto-login users when they simply visit the Login page.
+* Do NOT bypass email/password verification for existing accounts.
+* Existing users must still use Sign In with their email and password.
+* Keep the current session handling and authentication validation correct.
+* Do not reintroduce the previous auto-login bug where users were automatically logged in when opening the Login page.
+
+### 2. Update button labels
+
+Replace:
+"Create Account"
+
+With:
+"Sign Up"
+
+Keep:
+"Sign In"
+
+Use the standard authentication terminology:
+
+* Sign In = existing users
+* Sign Up = new users
+
+Update the relevant buttons and links consistently across the authentication UI and homepage.
+
+### 3. Preserve the existing onboarding structure
+
+Keep the recently implemented role-based onboarding:
+
+Student:
+
+* One-page onboarding containing Institution, Study Plan, and Discipline.
+* Then Profile Confirmed.
+* Then Student Dashboard.
+
+Instructor:
+
+* Separate Instructor onboarding flow.
+* Do not force Instructor users through Student-specific fields.
+* Then Profile Confirmed.
+* Then Instructor Dashboard.
+
+### 4. Protect routing
+
+Before making changes, inspect the current authentication and routing logic.
+
+Do NOT:
+
+* Break existing routes.
+* Change protected route behavior.
+* Remove existing onboarding paths unnecessarily.
+* Modify unrelated features.
+* Reintroduce the previous login auto-redirect bug.
+
+Make only the minimum necessary changes and verify these exact flows:
+
+New Student:
+Sign Up → Account Created → Auto Login → Student Onboarding → Profile Confirmed → Student Dashboard
+
+New Instructor:
+Sign Up → Account Created → Auto Login → Instructor Onboarding → Profile Confirmed → Instructor Dashboard
+
+Existing Student/Instructor:
+Sign In → Email + Password → Credentials Verified → Correct Dashboard/Onboarding
+
+Login page:
+Visiting Sign In must ALWAYS show the email/password form and must NEVER automatically log in an existing session.
+
+Do not add Google or GitHub authentication.
