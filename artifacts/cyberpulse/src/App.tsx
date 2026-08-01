@@ -18,6 +18,7 @@ import OnboardingGithub from '@/pages/onboarding/github';
 import OnboardingInstructor from '@/pages/onboarding/instructor';
 import OnboardingConfirmation from '@/pages/onboarding/confirmation';
 import Dashboard from '@/pages/dashboard';
+import LabDetail from '@/pages/lab-detail';
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ function Router() {
       {/* OAuth 2.0 callback — Google redirects here after authentication */}
       <Route path="/auth/callback" component={AuthCallback} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/dashboard/lab/:labId" component={LabDetail} />
       <Route path="/onboarding/university" component={OnboardingUniversity} />
       <Route path="/onboarding/university/:universityId" component={OnboardingUniversityPlan} />
       <Route path="/onboarding/major" component={OnboardingMajor} />

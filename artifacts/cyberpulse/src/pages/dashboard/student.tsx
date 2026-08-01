@@ -1,13 +1,16 @@
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   Trophy, TrendingUp, AlertTriangle, ShieldCheck,
   Clock, Award, Terminal, BrainCircuit, Sparkles, ChevronDown, ChevronUp,
-  MessageSquare
+  MessageSquare, ChevronRight,
 } from "lucide-react";
 import { SiGithub } from "react-icons/si";
 import { useAuth } from "@/context/auth";
-import { mockChallenges } from "@/data/mock-dashboard";
+import { mockChallenges, type Challenge, type Status } from "@/data/mock-dashboard";
+import { getLabProgressAll, formatLabTime } from "@/data/lab-store";
+import { FUNCTIONAL_LAB_IDS } from "@/data/lab-content";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import StudentQuiz from "./student-quiz";
@@ -30,8 +33,30 @@ function AiScoreBadge({ score }: { score: number }) {
   );
 }
 
+/** Merge mockChallenges with real localStorage progress for the 3 functional labs */
+function useChallenges(): Challenge[] {
+  const labProgressAll = getLabProgressAll();
+  return mockChallenges.map((c) => {
+    if (!FUNCTIONAL_LAB_IDS.includes(c.id)) return c;
+    const progress = labProgressAll.find((p) => p.labId === c.id);
+    if (!progress) {
+      // No attempt yet → show as Not Started
+      return { ...c, status: "Not Started" as Status, scoreEarned: 0, timeSeconds: undefined, timeTaken: undefined };
+    }
+    return {
+      ...c,
+      status: progress.status as Status,
+      scoreEarned: progress.scoreEarned,
+      maxScore: progress.maxScore,
+      timeSeconds: progress.timeSeconds,
+      timeTaken: progress.timeSeconds ? formatLabTime(progress.timeSeconds) : undefined,
+    };
+  });
+}
+
 export default function StudentDashboard() {
   const { user } = useAuth();
+  const [, navigate] = useLocation();
   const [tab, setTab] = useState<"labs" | "quizzes">("labs");
   const [expandedHints, setExpandedHints] = useState<string | null>(null);
 
@@ -49,15 +74,18 @@ export default function StudentDashboard() {
 
   if (!user) return null;
 
-  const totalScore = mockChallenges.reduce((s, c) => s + c.scoreEarned, 0);
-  const totalTime  = mockChallenges.filter(c => c.timeSeconds).reduce((s, c) => s + (c.timeSeconds || 0), 0);
+  // Use real progress for functional labs, mock data for the rest
+  const challenges = useChallenges();
+
+  const totalScore = challenges.reduce((s, c) => s + c.scoreEarned, 0);
+  const totalTime  = challenges.filter(c => c.timeSeconds).reduce((s, c) => s + (c.timeSeconds || 0), 0);
   const totalHints = Object.values(hintCounts).reduce((s, v) => s + v, 0) +
-    mockChallenges.reduce((s, c) => s + c.aiHintCount, 0);
-  const completed  = mockChallenges.filter(c => c.status === "Completed").length;
+    challenges.reduce((s, c) => s + c.aiHintCount, 0);
+  const completed  = challenges.filter(c => c.status === "Completed").length;
   const hours      = Math.floor(totalTime / 3600);
   const mins       = Math.floor((totalTime % 3600) / 60);
 
-  const openMentor = (challenge: typeof mockChallenges[0]) => {
+  const openMentor = (challenge: Challenge) => {
     setActiveMentorChallenge({
       id: challenge.id,
       title: challenge.title,
@@ -97,7 +125,7 @@ export default function StudentDashboard() {
         {[
           { label: "Total Score",    value: totalScore.toLocaleString('en-US'), icon: <Trophy size={20} className="text-primary" />,   sub: `+120 this week`, subColor: "text-success" },
           { label: "Global Rank",    value: "Top 15%",                   icon: <Award size={20} className="text-secondary" />,   sub: "of 10k+ students", subColor: "text-muted-foreground" },
-          { label: "Labs Completed", value: `${completed} / ${mockChallenges.length}`, icon: <ShieldCheck size={20} className="text-success" />, sub: `${Math.round(completed/mockChallenges.length*100)}% done`, subColor: "text-muted-foreground" },
+          { label: "Labs Completed", value: `${completed} / ${challenges.length}`, icon: <ShieldCheck size={20} className="text-success" />, sub: `${Math.round(completed/challenges.length*100)}% done`, subColor: "text-muted-foreground" },
           { label: "Total Lab Time", value: `${hours}h ${mins}m`,        icon: <Clock size={20} className="text-secondary" />,   sub: "across all labs",  subColor: "text-muted-foreground" },
         ].map((s, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }}
@@ -209,13 +237,20 @@ export default function StudentDashboard() {
             </h2>
 
             <div className="grid grid-cols-1 gap-3">
-              {mockChallenges.map((challenge, idx) => {
+              {challenges.map((challenge, idx) => {
                 const labHints = (hintCounts[challenge.id] || 0) + challenge.aiHintCount;
-                return (
+                const isFunctional = FUNCTIONAL_LAB_IDS.includes(challenge.id);
+
+                const cardContent = (
                   <motion.div key={challenge.id}
                     initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.55 + idx * 0.05 }}
-                    className="bg-card/50 border border-border/50 rounded-xl overflow-hidden hover:bg-card transition-colors">
+                    className={cn(
+                      "bg-card/50 border border-border/50 rounded-xl overflow-hidden transition-colors",
+                      isFunctional
+                        ? "hover:bg-card hover:border-primary/30 cursor-pointer"
+                        : "hover:bg-card",
+                    )}>
                     {/* Main row */}
                     <div className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
@@ -228,10 +263,15 @@ export default function StudentDashboard() {
                           )}>{challenge.difficulty}</span>
                           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md">{challenge.category}</span>
                           {challenge.status === "Completed" && <AiScoreBadge score={challenge.aiDetectionScore} />}
+                          {isFunctional && challenge.status === "Not Started" && (
+                            <span className="text-xs text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md font-medium">
+                              Interactive
+                            </span>
+                          )}
                         </div>
 
                         {labHints >= 5 && (
-                          <button onClick={() => setExpandedHints(expandedHints === challenge.id ? null : challenge.id)}
+                          <button onClick={(e) => { e.stopPropagation(); setExpandedHints(expandedHints === challenge.id ? null : challenge.id); }}
                             className="inline-flex items-center gap-1.5 mt-1 px-2.5 py-1 rounded-md bg-warning/10 border border-warning/30 text-warning text-xs hover:bg-warning/20 transition-colors">
                             <AlertTriangle size={12} />
                             AI used {labHints}x — view questions
@@ -240,7 +280,7 @@ export default function StudentDashboard() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-3 md:min-w-[320px] justify-between md:justify-end shrink-0">
+                      <div className="flex items-center gap-3 md:min-w-[340px] justify-between md:justify-end shrink-0">
                         {challenge.timeTaken && (
                           <div className="flex items-center gap-1.5 text-sm text-muted-foreground whitespace-nowrap">
                             <Clock size={13} /> {challenge.timeTaken}
@@ -258,14 +298,28 @@ export default function StudentDashboard() {
                           challenge.status === "Not Started" && "text-muted-foreground"
                         )}>{challenge.status}</span>
 
-                        {/* Ask AI Mentor button */}
-                        <button
-                          onClick={() => openMentor(challenge)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-medium hover:bg-primary/20 hover:border-primary/50 transition-all whitespace-nowrap"
-                        >
-                          <MessageSquare size={12} />
-                          Ask AI
-                        </button>
+                        {isFunctional ? (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/lab/${challenge.id}`); }}
+                            className={cn(
+                              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap",
+                              challenge.status === "Completed"
+                                ? "bg-success/10 border border-success/30 text-success hover:bg-success/20"
+                                : "bg-primary/10 border border-primary/30 text-primary hover:bg-primary/20 hover:border-primary/50",
+                            )}
+                          >
+                            {challenge.status === "Completed" ? "Review" : challenge.status === "In Progress" ? "Continue" : "Start"}
+                            <ChevronRight size={12} />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); openMentor(challenge); }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-medium hover:bg-primary/20 hover:border-primary/50 transition-all whitespace-nowrap"
+                          >
+                            <MessageSquare size={12} />
+                            Ask AI
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -287,6 +341,20 @@ export default function StudentDashboard() {
                     )}
                   </motion.div>
                 );
+
+                // Wrap functional labs in a clickable div
+                if (isFunctional) {
+                  return (
+                    <div
+                      key={challenge.id}
+                      onClick={() => navigate(`/dashboard/lab/${challenge.id}`)}
+                    >
+                      {cardContent}
+                    </div>
+                  );
+                }
+
+                return cardContent;
               })}
             </div>
           </motion.div>
