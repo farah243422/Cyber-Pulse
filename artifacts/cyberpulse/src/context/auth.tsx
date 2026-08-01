@@ -64,50 +64,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Restore session from localStorage (covers both email/password and Google flows)
-    const storedUser = localStorage.getItem(SESSION_KEY);
+    // Restore session from sessionStorage — cleared on tab/webview close so
+    // stale sessions never auto-log in across new visits.
+    const storedUser = sessionStorage.getItem(SESSION_KEY);
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch {
-        localStorage.removeItem(SESSION_KEY);
+        sessionStorage.removeItem(SESSION_KEY);
       }
     }
     setIsLoading(false);
   }, []);
 
-  // ── Email / password login (unchanged) ───────────────────────────────────────
+  // ── Email / password login ────────────────────────────────────────────────────
   const login = (email: string, password: string): { success: boolean; error?: string } => {
     const users = getStoredUsers();
     const byEmail = users.find(
       (u) => u.email.toLowerCase() === email.toLowerCase()
     );
     if (!byEmail) {
-      return { success: false, error: 'No account found with that email. Please register first.' };
+      return { success: false, error: 'No account found. Please create an account first.' };
     }
     if (byEmail.password !== password) {
-      return { success: false, error: 'Incorrect password. Please try again.' };
+      return { success: false, error: 'Incorrect password.' };
     }
-    const found = byEmail;
-    const { password: _pw, ...userData } = found;
+    const { password: _pw, ...userData } = byEmail;
     setUser(userData);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(userData));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(userData));
     return { success: true };
   };
 
-  // ── Email / password registration (unchanged) ────────────────────────────────
+  // ── Email / password registration ────────────────────────────────────────────
+  // Saves the account to the user store but does NOT create a session.
+  // The user must sign in explicitly after registering.
   const register = (userData: User & { password: string }): { success: boolean; error?: string } => {
     const users = getStoredUsers();
     const exists = users.find((u) => u.email.toLowerCase() === userData.email.toLowerCase());
     if (exists) {
       return { success: false, error: 'An account with this email already exists.' };
     }
-    const newUser: StoredUser = { ...userData };
-    saveStoredUsers([...users, newUser]);
-
-    const { password: _pw, ...sessionUser } = newUser;
-    setUser(sessionUser);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
+    saveStoredUsers([...users, { ...userData }]);
     return { success: true };
   };
 
@@ -155,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     setUser(sessionUser);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
 
     const isNewUser = !existing || !existing.onboardingCompleted;
     return { isNewUser };
@@ -166,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser((prev) => {
       if (!prev) return null;
       const updated = { ...prev, ...updates };
-      localStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(updated));
 
       const users = getStoredUsers();
       const idx = users.findIndex((u) => u.id === updated.id);
@@ -190,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Non-fatal — local state is cleared regardless
     }
     setUser(null);
-    localStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(SESSION_KEY);
   };
 
   return (

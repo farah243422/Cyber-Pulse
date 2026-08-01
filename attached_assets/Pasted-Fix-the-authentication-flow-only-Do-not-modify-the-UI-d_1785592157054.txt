@@ -1,0 +1,40 @@
+Fix the authentication flow only. Do not modify the UI design or unrelated features.
+
+Current bug:
+When I click "Sign In" or "Create Account", the app lets me enter CyberPulse directly without asking for an email or password. This is incorrect.
+
+Required behavior:
+
+1. Clicking "Sign In" must always open the Login page first.
+2. The Login page must require:
+
+   * Email
+   * Password
+3. The user must NOT be logged in automatically.
+4. Clicking "Create Account" must always open the Registration page first.
+5. Registration must require the user to create an account with email and password.
+6. After successful registration, the account must be saved correctly.
+7. The user should then be able to sign in using the SAME email and password.
+8. Login must verify that:
+
+   * The email exists in the registered users list.
+   * The password matches the registered password.
+9. If the email does not exist, show "No account found. Please create an account first." and do NOT allow access.
+10. If the password is incorrect, show "Incorrect password." and do NOT allow access.
+11. Do NOT automatically authenticate users when they visit the Login page.
+12. Do NOT automatically create a user session when clicking Sign In or Create Account.
+13. Check the current authentication context and routing guards carefully. Find and fix the exact reason why users are being allowed into the app without entering credentials.
+14. Make sure the login state is only created after successful email/password verification.
+15. Keep Google and GitHub authentication disabled and do not add them.
+16. Keep the existing UI design unchanged.
+17. Do not modify unrelated pages or features.
+
+Test the complete flow after fixing:
+
+Home → Sign In → Login page → Enter email + password → Verify credentials → Enter CyberPulse.
+
+Also test:
+
+Home → Create Account → Register → Create account → Sign In → Enter the same email + password → Enter CyberPulse.
+
+Do not consider the task complete until both flows require actual credentials and work correctly.

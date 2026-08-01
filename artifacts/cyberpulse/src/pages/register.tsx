@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Terminal, Shield, Mail, Lock, User as UserIcon, GraduationCap, ArrowRight, AlertCircle, Eye, EyeOff } from "lucide-react";
@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 export default function Register() {
   const [, setLocation] = useLocation();
-  const { register, user } = useAuth();
+  const { register } = useAuth();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -19,11 +19,6 @@ export default function Register() {
   const [role, setRole] = useState<Role>("Student");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // Already logged in → go to dashboard
-  useEffect(() => {
-    if (user) setLocation("/dashboard");
-  }, [user]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +43,8 @@ export default function Register() {
       if (!result.success) {
         setError(result.error || "Registration failed.");
       } else {
-        setLocation("/onboarding/university");
+        // Account saved — redirect to login so the user signs in with credentials
+        setLocation("/login");
       }
     }, 600);
   };
