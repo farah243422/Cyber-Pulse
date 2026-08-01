@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth, Role } from "@/context/auth";
 import { cn } from "@/lib/utils";
-import GoogleSignInButton from "@/components/google-sign-in-button";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -110,21 +109,6 @@ export default function Register() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Create Profile</h1>
             <p className="text-muted-foreground">Initialize your CyberPulse identity.</p>
-          </div>
-
-          {/* ── Google Sign-Up ─────────────────────────────────────────────── */}
-          <GoogleSignInButton label="Sign up with Google" origin="register" />
-
-          {/* ── Divider ────────────────────────────────────────────────────── */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border/60" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-3 text-muted-foreground tracking-wider">
-                or register with email
-              </span>
-            </div>
           </div>
 
           {/* ── Email / password form ──────────────────────────────────────── */}
