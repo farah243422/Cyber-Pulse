@@ -94,8 +94,13 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <Link href="/login">
+              <Link href="/register">
                 <Button size="lg" className="w-full sm:w-auto text-base h-14 px-8 glow-primary">
+                  Create Account
+                </Button>
+              </Link>
+              <Link href="/login">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto text-base h-14 px-8">
                   Sign In
                 </Button>
               </Link>
