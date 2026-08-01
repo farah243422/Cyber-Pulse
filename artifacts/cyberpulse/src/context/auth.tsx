@@ -79,12 +79,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ── Email / password login (unchanged) ───────────────────────────────────────
   const login = (email: string, password: string): { success: boolean; error?: string } => {
     const users = getStoredUsers();
-    const found = users.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+    const byEmail = users.find(
+      (u) => u.email.toLowerCase() === email.toLowerCase()
     );
-    if (!found) {
-      return { success: false, error: 'Invalid email or password.' };
+    if (!byEmail) {
+      return { success: false, error: 'No account found with that email. Please register first.' };
     }
+    if (byEmail.password !== password) {
+      return { success: false, error: 'Incorrect password. Please try again.' };
+    }
+    const found = byEmail;
     const { password: _pw, ...userData } = found;
     setUser(userData);
     localStorage.setItem(SESSION_KEY, JSON.stringify(userData));
