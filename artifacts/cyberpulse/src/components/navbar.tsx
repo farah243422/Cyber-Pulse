@@ -105,21 +105,7 @@ export function Navbar() {
                 )}
               </AnimatePresence>
             </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link href="/register">
-                <Button size="sm" className="text-sm h-9 px-4">
-                  Create Account
-                </Button>
-              </Link>
-              <Link
-                href="/login"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-2"
-              >
-                Sign In
-              </Link>
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </nav>
