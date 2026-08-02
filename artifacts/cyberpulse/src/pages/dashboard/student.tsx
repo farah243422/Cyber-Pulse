@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   Trophy, TrendingUp, AlertTriangle, ShieldCheck,
   Clock, Terminal, BrainCircuit, Sparkles, ChevronDown, ChevronUp,
-  MessageSquare, ChevronRight, GitBranch, CheckCircle2, Loader2,
+  MessageSquare, ChevronRight, GitBranch, CheckCircle2, Loader2, Search, Lock,
 } from "lucide-react";
 import { SiGithub } from "react-icons/si";
 import { useAuth } from "@/context/auth";

@@ -1,0 +1,131 @@
+Improve and reorganize the existing "Labs & Challenges" page UI only.
+
+IMPORTANT:
+
+* Do NOT rebuild the page from scratch.
+* Do NOT change the existing application architecture.
+* Do NOT change authentication, routing, backend, database, or existing lab logic.
+* Do NOT modify the existing working Interactive Labs (SQL Injection, XSS, Network Packet Analysis, etc.).
+* Do NOT add new dependencies.
+* Keep the current CyberPulse design system, colors, typography, cards, and overall visual style.
+* Make only the minimum necessary frontend/UI changes.
+
+GOAL:
+Make the Labs & Challenges page cleaner, more organized, and easier to navigate by grouping labs according to their cybersecurity category.
+
+1. Add a clean page header:
+
+* Title: "Labs & Challenges"
+* Short subtitle: "Practice cybersecurity skills through hands-on labs and challenges."
+
+2. Add a search bar:
+
+* Placeholder: "Search labs..."
+* Search by lab name.
+* Keep it simple and responsive.
+
+3. Add category filters/tabs:
+
+* All Labs
+* Web Security
+* Network Security
+* System Security
+* Binary Exploitation
+* Cryptography
+* Social Engineering
+
+When a category is selected, show only labs belonging to that category.
+"All Labs" should show everything.
+
+4. Add difficulty filters if the existing UI supports them:
+
+* All
+* Easy
+* Medium
+* Hard
+
+Do not overcomplicate the filtering system.
+
+5. Organize the lab cards visually by category when "All Labs" is selected.
+
+For example:
+
+Web Security
+
+* SQL Injection Basics
+* Cross-Site Scripting (XSS)
+
+Network Security
+
+* Network Packet Analysis
+* Firewall & IDS Configuration
+
+System Security
+
+* Linux Privilege Escalation
+
+Cryptography
+
+* Cryptography Fundamentals
+
+Binary Exploitation
+
+* Buffer Overflow 101
+
+Social Engineering
+
+* Phishing Simulation Defense
+
+Use the existing lab data and categories. Do not invent new labs or fake data.
+
+6. Improve each Lab Card:
+   Keep the card compact and clean. Show:
+
+* Lab name
+* Category
+* Difficulty
+* Status
+* Progress/score if real data already exists
+* Interactive badge if the lab is interactive
+* A clear action button
+
+Use appropriate actions:
+
+* "Start" for Not Started
+* "Continue" for In Progress
+* "Review" for Completed
+
+7. For labs that are not yet implemented or do not have working interactive content:
+
+* Do NOT make them appear fully functional.
+* Keep them visible in the catalog.
+* Show a subtle "Coming Soon" badge.
+* Use a disabled "Coming Soon" button or "Preview" if the existing design supports it.
+* Do not create fake interactive functionality.
+
+8. Keep the existing working lab functionality exactly as it is.
+   The following existing Interactive Labs must continue working without modification to their internal logic:
+
+* SQL Injection Basics
+* Cross-Site Scripting (XSS)
+* Network Packet Analysis
+
+9. Make the page responsive:
+
+* Desktop: organized grid/cards with category sections.
+* Tablet/mobile: cards should stack cleanly.
+* Filters and search should remain usable on smaller screens.
+
+10. Before making changes, inspect the existing Labs & Challenges page and reuse existing components and data structures wherever possible.
+
+After the changes, verify that:
+
+* Search works.
+* Category filters work.
+* Difficulty filters work if implemented.
+* Existing lab statuses and progress remain unchanged.
+* Interactive Labs still open and work correctly.
+* Labs that are not implemented clearly show "Coming Soon".
+* No existing functionality is broken.
+
+Keep this implementation lightweight and frontend-focused. Make the smallest set of changes necessary to improve organization and usability.
