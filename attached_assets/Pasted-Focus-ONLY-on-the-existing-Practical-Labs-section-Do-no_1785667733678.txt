@@ -1,0 +1,51 @@
+Focus ONLY on the existing Practical Labs section. Do not modify the Quiz section, authentication, onboarding, navbar, or unrelated features.
+
+I want to keep Quizzes as a separate feature. Do NOT remove or change the existing quiz functionality.
+
+Transform the existing Labs into a functional hackathon-level practical prototype. Do not build a full backend or database, but also do not leave the labs as static mock cards or multiple-choice quizzes.
+
+Use the existing 3 labs:
+
+1. SQL Injection Basics
+
+* Create a safe interactive simulated login page with an intentionally vulnerable SQL query.
+* Let the student interact with the login input.
+* Validate whether the student successfully identifies/exploits the intended vulnerability in the simulation.
+* Show success/failure feedback and calculate a score.
+
+2. Cross-Site Scripting (XSS)
+
+* Create a safe simulated web page with an intentionally vulnerable input field.
+* Let the student interact with the input and demonstrate the XSS concept in the sandbox.
+* Validate completion based on the intended task.
+* Show feedback and score.
+
+3. Network Packet Analysis
+
+* Create a simulated packet/traffic analysis interface using realistic sample packet data.
+* Let the student inspect packets and identify the suspicious/malicious traffic or attack type.
+* Validate the student's selection.
+* Show feedback and score.
+
+For all 3 labs:
+
+* Keep the existing visual design and lab cards.
+* Replace the current multiple-choice quiz flow as the PRIMARY lab experience.
+* Add a practical interactive experience.
+* Keep Start Lab, timer, progress, score, completion status, and result summary.
+* Save progress using the existing localStorage approach.
+* Update Dashboard lab statistics after completion.
+* Allow students to review their previous attempt and retake the lab.
+* Use realistic predefined lab scenarios and validation logic, not fake random results.
+* Keep the implementation modular so a real backend or external platforms such as Hack The Box / TryHackMe can be integrated later.
+* Do NOT implement real third-party API integrations now.
+* Do NOT build a full backend or database.
+* Do NOT modify the existing Quiz section.
+
+Important:
+This is a hackathon prototype. Prioritize making the 3 labs genuinely interactive and demonstrable over adding many features.
+
+The final flow should be:
+Dashboard → Labs → Select Lab → Start Practical Lab → Interact with Lab → Submit/Validate → Score + Feedback → Complete → Dashboard Progress Updated.
+
+After implementation, test all 3 lab flows and make sure there are no broken routes or console errors.

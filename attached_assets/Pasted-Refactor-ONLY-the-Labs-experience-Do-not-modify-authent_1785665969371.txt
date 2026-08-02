@@ -1,0 +1,39 @@
+Refactor ONLY the Labs experience. Do not modify authentication, onboarding, dashboard routing, or unrelated features.
+
+The main goal is to make CyberPulse a university cybersecurity LAB management platform, not a quiz platform.
+
+1. Rename "Labs & Challenges" to "Labs" everywhere in the relevant UI.
+2. Remove the current multiple-choice quiz as the main lab experience. Do not show 5-question quizzes as the primary lab flow.
+3. Keep the existing lab cards and design style, but make the lab experience focused on practical, hands-on cybersecurity learning.
+4. Create a practical lab structure that can support:
+
+   * Native CyberPulse labs
+   * External labs from platforms such as Hack The Box or TryHackMe
+5. For now, implement the architecture/UI for both lab types without requiring real third-party API integrations.
+6. Each lab should have:
+
+   * Title
+   * Category
+   * Difficulty
+   * Estimated time
+   * Lab type: Native or External
+   * Learning objectives
+   * Start Lab / Open Lab action
+   * Progress status
+   * Completion status
+7. For Native labs, create a simple interactive practical environment or simulation instead of multiple-choice questions.
+8. For External labs, show the external platform and provide an "Open Lab" action. Keep the integration modular so real API integration can be added later.
+9. Keep progress tracking using the existing localStorage implementation for now. Do not add a database or backend.
+10. Add an "AI Learning Integrity" concept to the lab result/progress data model, but do NOT claim that AI can definitively detect cheating. Use a risk-based model such as Low / Medium / High based on observable learning behavior.
+11. Keep the existing Dashboard statistics working and update them based on actual lab progress.
+12. Remove the current quiz-based result flow from the main lab experience, but keep the quiz component reusable internally if needed for future knowledge checks.
+
+IMPORTANT:
+
+* This is a hackathon prototype, so prioritize a clean, realistic architecture and functional demo over building complex infrastructure.
+* Do not build real Hack The Box or TryHackMe API integration yet.
+* Do not create a full backend.
+* Do not change authentication or onboarding.
+* Minimize code changes and reuse existing components.
+* Make sure all existing routes continue to work.
+* Verify the flow: Dashboard → Labs → Select Lab → Practical Lab / External Lab → Complete → Progress Updated.

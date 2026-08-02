@@ -3,18 +3,28 @@ import { useParams, useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowLeft, Clock, Trophy, ShieldCheck, Target, Play,
-  CheckCircle2, XCircle, ChevronRight, RotateCcw, Award,
-  AlertTriangle, Zap,
+  CheckCircle2, ChevronRight, RotateCcw, Award, AlertTriangle, Zap,
 } from "lucide-react";
 import { useAuth } from "@/context/auth";
-import { getLabDefinition, type LabDefinition, type LabQuestion } from "@/data/lab-content";
+import { getLabDefinition, type LabDefinition } from "@/data/lab-content";
 import { getLabProgress, saveLabProgress, formatLabTime } from "@/data/lab-store";
 import { cn } from "@/lib/utils";
 import { Navbar } from "@/components/navbar";
 import { Progress } from "@/components/ui/progress";
 
+// Interactive lab components
+import SQLInjectionLab from "@/labs/sql-injection-lab";
+import XSSLab from "@/labs/xss-lab";
+import PacketAnalysisLab from "@/labs/packet-analysis-lab";
+
 type Phase = "intro" | "active" | "result";
 
+interface InteractiveResult {
+  score: number;
+  steps: string[];
+}
+
+/* ── Difficulty Badge ────────────────────────────────────────────────────── */
 function DifficultyBadge({ difficulty }: { difficulty: LabDefinition["difficulty"] }) {
   return (
     <span className={cn(
@@ -28,7 +38,7 @@ function DifficultyBadge({ difficulty }: { difficulty: LabDefinition["difficulty
   );
 }
 
-/* ─── Timer ─────────────────────────────────────────────────────────────── */
+/* ── Timer ──────────────────────────────────────────────────────────────── */
 function useTimer(running: boolean) {
   const [seconds, setSeconds] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -45,7 +55,7 @@ function useTimer(running: boolean) {
   return seconds;
 }
 
-/* ─── Intro Phase ────────────────────────────────────────────────────────── */
+/* ── Intro Phase ─────────────────────────────────────────────────────────── */
 function IntroPhase({
   lab,
   previousProgress,
@@ -63,12 +73,14 @@ function IntroPhase({
       exit={{ opacity: 0, y: -16 }}
       className="max-w-2xl mx-auto"
     >
-      {/* Hero card */}
       <div className="bg-card border border-border/50 rounded-2xl p-8 mb-6 shadow-sm">
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <DifficultyBadge difficulty={lab.difficulty} />
           <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-md font-medium">
             {lab.category}
+          </span>
+          <span className="text-xs text-primary bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-md font-medium">
+            Interactive Lab
           </span>
           {previousProgress?.status === "Completed" && (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border bg-success/10 text-success border-success/20">
@@ -85,7 +97,7 @@ function IntroPhase({
           {[
             { icon: <Clock size={16} className="text-secondary" />, label: "Est. Time", value: lab.estimatedTime },
             { icon: <Trophy size={16} className="text-primary" />, label: "Max Score", value: `${lab.maxScore} pts` },
-            { icon: <Zap size={16} className="text-warning" />, label: "Questions", value: `${lab.questions.length}` },
+            { icon: <Zap size={16} className="text-warning" />, label: "Stages", value: "3 challenges" },
             { icon: <ShieldCheck size={16} className="text-success" />, label: "Category", value: lab.category },
           ].map((m) => (
             <div key={m.label} className="bg-background/60 rounded-xl p-3 text-center border border-border/40">
@@ -134,22 +146,19 @@ function IntroPhase({
   );
 }
 
-/* ─── Active Phase ───────────────────────────────────────────────────────── */
-function ActivePhase({
-  lab,
+/* ── Interactive Lab Router ──────────────────────────────────────────────── */
+function InteractiveLabRunner({
+  labId,
   elapsed,
   onSubmit,
 }: {
-  lab: LabDefinition;
+  labId: string;
   elapsed: number;
-  onSubmit: (answers: (number | null)[]) => void;
+  onSubmit: (score: number, steps: string[]) => void;
 }) {
-  const [answers, setAnswers] = useState<(number | null)[]>(
-    () => new Array(lab.questions.length).fill(null),
-  );
-
-  const answered = answers.filter((a) => a !== null).length;
-  const allAnswered = answered === lab.questions.length;
+  /* Sticky header */
+  const lab = getLabDefinition(labId);
+  if (!lab) return null;
 
   return (
     <motion.div
@@ -157,118 +166,65 @@ function ActivePhase({
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
-      className="max-w-2xl mx-auto"
     >
-      {/* Sticky header */}
-      <div className="sticky top-4 z-10 bg-card/90 backdrop-blur-sm border border-border/50 rounded-2xl px-5 py-3 mb-6 shadow-sm flex items-center justify-between">
+      {/* Sticky timer header */}
+      <div className="sticky top-4 z-10 bg-card/90 backdrop-blur-sm border border-border/50 rounded-2xl px-5 py-3 mb-6 shadow-sm flex items-center justify-between max-w-3xl mx-auto">
         <div className="flex items-center gap-2 text-sm font-medium">
           <ShieldCheck size={16} className="text-primary" />
           <span>{lab.title}</span>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Clock size={14} className="text-secondary" />
-            <span className="font-mono font-medium">{formatLabTime(elapsed)}</span>
-          </div>
-          <span className="text-xs text-muted-foreground">
-            {answered}/{lab.questions.length} answered
-          </span>
+        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Clock size={14} className="text-secondary" />
+          <span className="font-mono font-medium">{formatLabTime(elapsed)}</span>
         </div>
       </div>
 
-      {/* Questions */}
-      <div className="space-y-5 mb-8">
-        {lab.questions.map((q: LabQuestion, qi: number) => (
-          <motion.div
-            key={q.id}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: qi * 0.06 }}
-            className="bg-card border border-border/50 rounded-2xl p-6 shadow-sm"
-          >
-            <div className="flex items-start gap-3 mb-4">
-              <span className="shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold">
-                {qi + 1}
-              </span>
-              <p className="text-sm font-medium leading-relaxed pt-0.5">{q.text}</p>
-            </div>
-
-            <div className="space-y-2 pl-10">
-              {q.options.map((opt, oi) => {
-                const selected = answers[qi] === oi;
-                return (
-                  <button
-                    key={oi}
-                    onClick={() => {
-                      const next = [...answers];
-                      next[qi] = oi;
-                      setAnswers(next);
-                    }}
-                    className={cn(
-                      "w-full text-left px-4 py-3 rounded-xl text-sm border transition-all",
-                      selected
-                        ? "bg-primary/10 border-primary/40 text-foreground font-medium"
-                        : "bg-background/40 border-border/40 text-muted-foreground hover:border-primary/30 hover:text-foreground hover:bg-background/70",
-                    )}
-                  >
-                    <span className={cn("mr-2 font-semibold", selected ? "text-primary" : "text-muted-foreground")}>
-                      {String.fromCharCode(65 + oi)}.
-                    </span>
-                    {opt}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="pl-10 mt-2">
-              <span className="text-xs text-muted-foreground">{q.points} pts</span>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Submit */}
-      {!allAnswered && (
-        <p className="text-center text-xs text-muted-foreground mb-3">
-          Answer all {lab.questions.length} questions to submit
-        </p>
-      )}
-      <button
-        disabled={!allAnswered}
-        onClick={() => onSubmit(answers)}
-        className={cn(
-          "w-full py-3.5 rounded-xl font-semibold text-base flex items-center justify-center gap-2 transition-all",
-          allAnswered
-            ? "bg-primary text-white hover:bg-primary/90 active:scale-[0.98] shadow-md shadow-primary/20"
-            : "bg-muted text-muted-foreground cursor-not-allowed",
-        )}
-      >
-        <ChevronRight size={18} />
-        Submit Answers
-      </button>
+      {labId === "c1" && <SQLInjectionLab elapsed={elapsed} onSubmit={onSubmit} />}
+      {labId === "c5" && <XSSLab elapsed={elapsed} onSubmit={onSubmit} />}
+      {labId === "c2" && <PacketAnalysisLab elapsed={elapsed} onSubmit={onSubmit} />}
     </motion.div>
   );
 }
 
-/* ─── Result Phase ───────────────────────────────────────────────────────── */
+/* ── Result Phase ────────────────────────────────────────────────────────── */
 function ResultPhase({
   lab,
-  answers,
+  result,
   timeSeconds,
   onBack,
   onRetake,
 }: {
   lab: LabDefinition;
-  answers: (number | null)[];
+  result: InteractiveResult;
   timeSeconds: number;
   onBack: () => void;
   onRetake: () => void;
 }) {
-  const score = lab.questions.reduce((sum, q, i) => {
-    return answers[i] === q.correctAnswer ? sum + q.points : sum;
-  }, 0);
+  const { score, steps } = result;
   const pct = Math.round((score / lab.maxScore) * 100);
   const passed = pct >= 60;
+
+  const stepLabels: Record<string, string> = {
+    // SQL Injection
+    "vulnerability-identified": "Identified the vulnerable SQL line",
+    "login-bypassed":           "Bypassed login with a SQL injection payload",
+    "login-bypassed+comment":   "Bypassed login using OR + comment injection",
+    "fix-identified":           "Selected the correct defence (parameterized queries)",
+    // XSS
+    "reflected-xss-script":     "Triggered Reflected XSS with a script tag payload",
+    "reflected-xss-event":      "Triggered Reflected XSS with an event handler payload",
+    "reflected-xss-cookie":     "Triggered Reflected XSS with a cookie-theft payload",
+    "stored-xss-basic":         "Demonstrated Stored XSS affecting all visitors",
+    "stored-xss-cookie":        "Demonstrated Stored XSS cookie theft attack",
+    "fix-correct":              "Selected the correct defence (output encoding + CSP)",
+    // Packet analysis
+    "attacker-ip-identified":   "Identified the attacker's IP address (10.0.0.99)",
+    "attack-type-correct":      "Correctly classified as a TCP SYN Port Scan",
+    "filter-score-30":          "Wrote a perfect Wireshark display filter",
+    "filter-score-25":          "Wrote a good Wireshark display filter",
+    "filter-score-20":          "Wrote a basic Wireshark display filter",
+    "filter-score-10":          "Partially correct Wireshark filter",
+  };
 
   return (
     <motion.div
@@ -294,10 +250,10 @@ function ResultPhase({
           {pct >= 90
             ? "Outstanding performance — you've mastered this topic."
             : pct >= 70
-            ? "Good work! Review the explanations to solidify your knowledge."
+            ? "Good work! Review the steps you missed to solidify your knowledge."
             : passed
-            ? "You passed! Study the incorrect answers to improve."
-            : "Don't give up — review the material and retake the lab."}
+            ? "You passed! Try again to complete all challenges."
+            : "Don't give up — review the lab and retake it to improve."}
         </p>
 
         <div className="flex items-center justify-center gap-8 mb-5">
@@ -335,66 +291,31 @@ function ResultPhase({
         </div>
       </div>
 
-      {/* Per-question breakdown */}
+      {/* Completed challenges breakdown */}
       <h3 className="text-base font-semibold mb-4 flex items-center gap-2">
-        <ShieldCheck size={16} className="text-primary" /> Question Review
+        <ShieldCheck size={16} className="text-primary" /> Challenge Breakdown
       </h3>
-      <div className="space-y-4">
-        {lab.questions.map((q: LabQuestion, i: number) => {
-          const chosen = answers[i];
-          const correct = q.correctAnswer;
-          const isRight = chosen === correct;
-          return (
+      <div className="space-y-3">
+        {steps.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-6">
+            No challenges completed. Retake the lab to earn points.
+          </div>
+        ) : (
+          steps.map((step, i) => (
             <motion.div
-              key={q.id}
+              key={step}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07 }}
-              className={cn(
-                "bg-card border rounded-xl p-5 shadow-sm",
-                isRight ? "border-success/30" : "border-destructive/30",
-              )}
+              className="bg-card border border-success/30 rounded-xl p-4 shadow-sm flex items-start gap-3"
             >
-              <div className="flex items-start gap-3 mb-3">
-                {isRight
-                  ? <CheckCircle2 size={18} className="text-success shrink-0 mt-0.5" />
-                  : <XCircle size={18} className="text-destructive shrink-0 mt-0.5" />
-                }
-                <p className="text-sm font-medium leading-relaxed">{q.text}</p>
-              </div>
-
-              <div className="space-y-1.5 pl-7 mb-3">
-                {q.options.map((opt, oi) => (
-                  <div
-                    key={oi}
-                    className={cn(
-                      "px-3 py-2 rounded-lg text-sm border",
-                      oi === correct
-                        ? "bg-success/10 border-success/30 text-success font-medium"
-                        : chosen === oi && !isRight
-                        ? "bg-destructive/10 border-destructive/30 text-destructive line-through"
-                        : "border-transparent text-muted-foreground",
-                    )}
-                  >
-                    <span className="font-semibold mr-1.5">{String.fromCharCode(65 + oi)}.</span>
-                    {opt}
-                    {oi === correct && <span className="ml-2 text-xs opacity-70">✓ Correct</span>}
-                    {chosen === oi && !isRight && <span className="ml-2 text-xs opacity-70">✗ Your answer</span>}
-                  </div>
-                ))}
-              </div>
-
-              <div className={cn(
-                "px-3 py-2.5 rounded-lg text-xs leading-relaxed border",
-                isRight
-                  ? "bg-success/5 border-success/20 text-foreground/80"
-                  : "bg-muted/50 border-border/40 text-foreground/70",
-              )}>
-                <span className="font-semibold">Explanation: </span>{q.explanation}
-              </div>
+              <CheckCircle2 size={18} className="text-success shrink-0 mt-0.5" />
+              <p className="text-sm font-medium">
+                {stepLabels[step] ?? step}
+              </p>
             </motion.div>
-          );
-        })}
+          ))
+        )}
       </div>
 
       <div className="mt-6 flex gap-3">
@@ -415,14 +336,14 @@ function ResultPhase({
   );
 }
 
-/* ─── Main Page ──────────────────────────────────────────────────────────── */
+/* ── Main Page ───────────────────────────────────────────────────────────── */
 export default function LabDetailPage() {
   const { labId } = useParams<{ labId: string }>();
   const [, navigate] = useLocation();
   const { user } = useAuth();
 
   const [phase, setPhase] = useState<Phase>("intro");
-  const [finalAnswers, setFinalAnswers] = useState<(number | null)[]>([]);
+  const [labResult, setLabResult] = useState<InteractiveResult | null>(null);
   const [finalTime, setFinalTime] = useState(0);
 
   const timerRunning = phase === "active";
@@ -431,7 +352,6 @@ export default function LabDetailPage() {
   const lab = labId ? getLabDefinition(labId) : null;
   const previousProgress = labId ? getLabProgress(labId) : null;
 
-  // Auth guard
   useEffect(() => {
     if (!user) navigate("/login");
   }, [user, navigate]);
@@ -448,7 +368,6 @@ export default function LabDetailPage() {
   }
 
   const handleStart = () => {
-    // Save "In Progress" immediately
     saveLabProgress({
       labId: lab.id,
       status: "In Progress",
@@ -456,14 +375,12 @@ export default function LabDetailPage() {
       maxScore: lab.maxScore,
       timeSeconds: 0,
     });
+    setLabResult(null);
     setPhase("active");
   };
 
-  const handleSubmit = (answers: (number | null)[]) => {
-    const score = lab.questions.reduce((sum, q, i) =>
-      answers[i] === q.correctAnswer ? sum + q.points : sum, 0);
+  const handleInteractiveSubmit = (score: number, steps: string[]) => {
     const timeNow = elapsed;
-
     saveLabProgress({
       labId: lab.id,
       status: "Completed",
@@ -471,10 +388,9 @@ export default function LabDetailPage() {
       maxScore: lab.maxScore,
       timeSeconds: timeNow,
       completedAt: new Date().toISOString(),
-      answers,
+      answers: [],
     });
-
-    setFinalAnswers(answers);
+    setLabResult({ score, steps });
     setFinalTime(timeNow);
     setPhase("result");
   };
@@ -510,19 +426,19 @@ export default function LabDetailPage() {
               onStart={handleStart}
             />
           )}
-          {phase === "active" && (
-            <ActivePhase
+          {phase === "active" && labId && (
+            <InteractiveLabRunner
               key="active"
-              lab={lab}
+              labId={labId}
               elapsed={elapsed}
-              onSubmit={handleSubmit}
+              onSubmit={handleInteractiveSubmit}
             />
           )}
-          {phase === "result" && (
+          {phase === "result" && labResult && (
             <ResultPhase
               key="result"
               lab={lab}
-              answers={finalAnswers}
+              result={labResult}
               timeSeconds={finalTime}
               onBack={handleBack}
               onRetake={handleRetake}
