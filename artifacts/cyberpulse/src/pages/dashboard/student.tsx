@@ -3,8 +3,8 @@ import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   Trophy, TrendingUp, AlertTriangle, ShieldCheck,
-  Clock, Award, Terminal, BrainCircuit, Sparkles, ChevronDown, ChevronUp,
-  MessageSquare, ChevronRight,
+  Clock, Terminal, BrainCircuit, Sparkles, ChevronDown, ChevronUp,
+  MessageSquare, ChevronRight, GitBranch, CheckCircle2, Loader2,
 } from "lucide-react";
 import { SiGithub } from "react-icons/si";
 import { useAuth } from "@/context/auth";
@@ -55,7 +55,7 @@ function useChallenges(): Challenge[] {
 }
 
 export default function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [, navigate] = useLocation();
   const [tab, setTab] = useState<"labs" | "quizzes">("labs");
   const [expandedHints, setExpandedHints] = useState<string | null>(null);
@@ -72,18 +72,41 @@ export default function StudentDashboard() {
     } catch { return {}; }
   });
 
+  // GitHub connection state (frontend-only simulation; structured for real OAuth later)
+  const [githubInputOpen, setGithubInputOpen] = useState(false);
+  const [githubUsernameInput, setGithubUsernameInput] = useState("");
+  const [githubConnecting, setGithubConnecting] = useState(false);
+
   if (!user) return null;
 
   // Use real progress for functional labs, mock data for the rest
   const challenges = useChallenges();
 
-  const totalScore = challenges.reduce((s, c) => s + c.scoreEarned, 0);
-  const totalTime  = challenges.filter(c => c.timeSeconds).reduce((s, c) => s + (c.timeSeconds || 0), 0);
-  const totalHints = Object.values(hintCounts).reduce((s, v) => s + v, 0) +
+  const totalScore  = challenges.reduce((s, c) => s + c.scoreEarned, 0);
+  const totalTime   = challenges.filter(c => c.timeSeconds).reduce((s, c) => s + (c.timeSeconds || 0), 0);
+  const totalHints  = Object.values(hintCounts).reduce((s, v) => s + v, 0) +
     challenges.reduce((s, c) => s + c.aiHintCount, 0);
-  const completed  = challenges.filter(c => c.status === "Completed").length;
-  const hours      = Math.floor(totalTime / 3600);
-  const mins       = Math.floor((totalTime % 3600) / 60);
+  const completed   = challenges.filter(c => c.status === "Completed").length;
+  const inProgress  = challenges.filter(c => c.status === "In Progress").length;
+  const hours       = Math.floor(totalTime / 3600);
+  const mins        = Math.floor((totalTime % 3600) / 60);
+
+  // Simulated GitHub connect — structured so real OAuth can replace this later
+  const handleConnectGithub = () => {
+    if (!githubUsernameInput.trim()) return;
+    setGithubConnecting(true);
+    // Simulate a short async handshake before persisting
+    setTimeout(() => {
+      updateUser({ githubConnected: true, githubUsername: githubUsernameInput.trim() });
+      setGithubConnecting(false);
+      setGithubInputOpen(false);
+      setGithubUsernameInput("");
+    }, 800);
+  };
+
+  const handleDisconnectGithub = () => {
+    updateUser({ githubConnected: false, githubUsername: undefined });
+  };
 
   const openMentor = (challenge: Challenge) => {
     setActiveMentorChallenge({
@@ -123,10 +146,10 @@ export default function StudentDashboard() {
       {/* Stats Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
-          { label: "Total Score",    value: totalScore.toLocaleString('en-US'), icon: <Trophy size={20} className="text-primary" />,   sub: `+120 this week`, subColor: "text-success" },
-          { label: "Global Rank",    value: "Top 15%",                   icon: <Award size={20} className="text-secondary" />,   sub: "of 10k+ students", subColor: "text-muted-foreground" },
-          { label: "Labs Completed", value: `${completed} / ${challenges.length}`, icon: <ShieldCheck size={20} className="text-success" />, sub: `${Math.round(completed/challenges.length*100)}% done`, subColor: "text-muted-foreground" },
-          { label: "Total Lab Time", value: `${hours}h ${mins}m`,        icon: <Clock size={20} className="text-secondary" />,   sub: "across all labs",  subColor: "text-muted-foreground" },
+          { label: "Total Score",    value: totalScore.toLocaleString('en-US'), icon: <Trophy size={20} className="text-primary" />,    sub: `${completed} lab${completed !== 1 ? "s" : ""} completed`, subColor: "text-muted-foreground" },
+          { label: "Labs Completed", value: `${completed} / ${challenges.length}`, icon: <ShieldCheck size={20} className="text-success" />, sub: `${Math.round(completed / challenges.length * 100)}% done`, subColor: "text-muted-foreground" },
+          { label: "In Progress",    value: String(inProgress),           icon: <GitBranch size={20} className="text-secondary" />, sub: `${challenges.length - completed - inProgress} not started`, subColor: "text-muted-foreground" },
+          { label: "Total Lab Time", value: hours > 0 ? `${hours}h ${mins}m` : `${mins}m`, icon: <Clock size={20} className="text-secondary" />, sub: "time on platform", subColor: "text-muted-foreground" },
         ].map((s, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }}
             className="bg-card border border-border/50 rounded-2xl p-5 shadow-sm">
@@ -143,12 +166,12 @@ export default function StudentDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         {/* GitHub */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          className="bg-card border border-border/50 rounded-2xl p-5 hover:border-primary/40 transition-colors group">
+          className="bg-card border border-border/50 rounded-2xl p-5 hover:border-primary/40 transition-colors">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
               <SiGithub size={16} /> GitHub Portfolio
             </div>
-            {user.githubUsername ? (
+            {user.githubConnected ? (
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
@@ -158,31 +181,77 @@ export default function StudentDashboard() {
             )}
           </div>
 
-          {user.githubUsername ? (
+          {user.githubConnected && user.githubUsername ? (
             <>
-              <a
-                href={`https://github.com/${user.githubUsername}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-mono text-sm text-primary mb-3 block hover:underline"
-              >
-                github.com/{user.githubUsername}
-              </a>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-background/50 rounded-lg p-3 text-center">
-                  <div className="text-xl font-bold">47</div>
-                  <div className="text-xs text-muted-foreground mt-1">Commits</div>
-                </div>
-                <div className="bg-background/50 rounded-lg p-3 text-center">
-                  <div className="text-xl font-bold">3</div>
-                  <div className="text-xs text-muted-foreground mt-1">Projects</div>
-                </div>
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 size={15} className="text-success shrink-0" />
+                <a
+                  href={`https://github.com/${user.githubUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-mono text-sm text-primary hover:underline truncate"
+                >
+                  github.com/{user.githubUsername}
+                </a>
+              </div>
+              <div className="flex gap-2">
+                <a
+                  href={`https://github.com/${user.githubUsername}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 text-center px-3 py-2 rounded-lg bg-primary/10 border border-primary/30 text-primary text-xs font-medium hover:bg-primary/20 transition-colors"
+                >
+                  View Portfolio
+                </a>
+                <button
+                  onClick={handleDisconnectGithub}
+                  className="px-3 py-2 rounded-lg bg-muted border border-border/50 text-muted-foreground text-xs font-medium hover:text-destructive hover:border-destructive/30 hover:bg-destructive/10 transition-colors"
+                >
+                  Disconnect
+                </button>
               </div>
             </>
+          ) : githubInputOpen ? (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Enter your GitHub username to link your portfolio.</p>
+              <input
+                type="text"
+                value={githubUsernameInput}
+                onChange={(e) => setGithubUsernameInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleConnectGithub()}
+                placeholder="e.g. octocat"
+                className="w-full px-3 py-2 rounded-lg bg-background border border-border/60 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-colors"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={handleConnectGithub}
+                  disabled={!githubUsernameInput.trim() || githubConnecting}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-white text-xs font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {githubConnecting ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                  {githubConnecting ? "Connecting…" : "Confirm"}
+                </button>
+                <button
+                  onClick={() => { setGithubInputOpen(false); setGithubUsernameInput(""); }}
+                  className="px-3 py-2 rounded-lg bg-muted border border-border/50 text-muted-foreground text-xs font-medium hover:text-foreground transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              No GitHub account linked. Connect one during onboarding to display your portfolio here.
-            </p>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Link your GitHub account to display your security projects and portfolio to instructors and recruiters.
+              </p>
+              <button
+                onClick={() => setGithubInputOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-foreground text-background text-xs font-medium hover:opacity-90 transition-opacity"
+              >
+                <SiGithub size={14} /> Connect GitHub
+              </button>
+            </div>
           )}
         </motion.div>
 
@@ -366,23 +435,30 @@ export default function StudentDashboard() {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <TrendingUp size={18} className="text-primary" />
-                  <h3 className="font-semibold">Public Portfolio for Employers</h3>
+                  <h3 className="font-semibold">Build Your Security Portfolio</h3>
                 </div>
-                <p className="text-sm text-muted-foreground">Your completed labs and scores are synced to your GitHub and visible to recruiters.</p>
+                <p className="text-sm text-muted-foreground">
+                  {user.githubConnected
+                    ? "Your GitHub is connected. Share your completed labs and projects with instructors and recruiters."
+                    : "Connect your GitHub to showcase your completed labs and security projects to recruiters."}
+                </p>
               </div>
-              {user.githubUsername ? (
+              {user.githubConnected && user.githubUsername ? (
                 <a
                   href={`https://github.com/${user.githubUsername}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0 px-5 py-2 rounded-xl bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors"
+                  className="shrink-0 flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors"
                 >
-                  View Public Profile
+                  <SiGithub size={15} /> View Profile
                 </a>
               ) : (
-                <span className="shrink-0 px-5 py-2 rounded-xl bg-muted text-muted-foreground font-medium text-sm cursor-not-allowed">
-                  No GitHub linked
-                </span>
+                <button
+                  onClick={() => { setGithubInputOpen(true); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  className="shrink-0 flex items-center gap-2 px-5 py-2 rounded-xl bg-foreground text-background font-medium text-sm hover:opacity-90 transition-opacity"
+                >
+                  <SiGithub size={15} /> Connect GitHub
+                </button>
               )}
             </div>
           </motion.div>

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Terminal, LayoutDashboard, LogOut } from "lucide-react";
+import { Terminal, LayoutDashboard, LogOut, GitBranch, CheckCircle2 } from "lucide-react";
+import { SiGithub } from "react-icons/si";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth";
 import { motion, AnimatePresence } from "framer-motion";
@@ -93,6 +94,28 @@ export function Navbar() {
                         <LayoutDashboard size={15} />
                         Dashboard
                       </Link>
+                      {/* GitHub connection shortcut — visible only for students */}
+                      {user.role === "Student" && (
+                        <Link
+                          href="/dashboard"
+                          onClick={() => setOpen(false)}
+                          className="flex items-center justify-between gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors w-full mt-0.5"
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <SiGithub size={15} />
+                            GitHub
+                          </span>
+                          {user.githubConnected ? (
+                            <span className="flex items-center gap-1 text-xs text-success">
+                              <CheckCircle2 size={11} /> Connected
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded">
+                              Connect
+                            </span>
+                          )}
+                        </Link>
+                      )}
                       <button
                         onClick={async () => { await logout(); setOpen(false); setLocation("/"); }}
                         className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors w-full mt-0.5"

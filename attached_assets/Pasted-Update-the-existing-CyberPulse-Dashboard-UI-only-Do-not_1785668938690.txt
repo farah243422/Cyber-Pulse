@@ -1,0 +1,51 @@
+Update the existing CyberPulse Dashboard UI only. Do not rebuild the application and do not change the existing authentication flow, routing, or overall design system.
+
+The goal is to make the Dashboard feel realistic for a new platform and remove misleading or fake metadata.
+
+1. Remove or replace unrealistic/fake statistics and metadata:
+
+* Remove "Global Rank", "Top 15% of 10k+ students", and any other numbers that imply a large existing user base.
+* Remove fake or unnecessary platform-wide statistics.
+* Do not show fabricated student counts, rankings, or activity.
+* Keep useful user-specific progress information only if it already exists or can be represented safely with local demo state.
+* Keep the Dashboard clean and focused on the user's own activity and progress.
+
+2. Update the Dashboard sections to focus on:
+
+* Personal progress
+* Labs completed / available
+* Recent activity
+* Learning progress
+* GitHub portfolio connection
+* AI assistance usage, but avoid presenting fake or misleading analytics
+
+3. GitHub connection:
+   Add a clear "Connect GitHub" flow inside the authenticated Dashboard, not as part of the initial Google Sign-In flow.
+
+Preferred UX:
+
+* Add a GitHub connection card on the Dashboard for users who have not connected GitHub.
+* The card should explain briefly that connecting GitHub allows users to link their repositories/projects and display their portfolio.
+* Add a prominent "Connect GitHub" button.
+* Also add a small "GitHub" or "Connect GitHub" item in the existing Navbar or user/profile menu so the connection can be accessed later.
+* Once connected, the UI should change to a "GitHub Connected" state with a placeholder username and buttons such as "View Portfolio" and "Manage Connection".
+* The connection state can be simulated with local frontend state or localStorage for now.
+* Do NOT implement a complete GitHub OAuth backend.
+* Do NOT create database tables or a full backend integration.
+* Do NOT require real GitHub API calls at this stage.
+* Structure the code cleanly so real GitHub OAuth can be integrated later without rewriting the UI.
+
+4. Important:
+
+* Preserve the existing CyberPulse visual style, colors, typography, components, and responsive layout.
+* Reuse existing components whenever possible.
+* Do not add unnecessary dependencies.
+* Do not create new pages unless absolutely necessary.
+* Do not modify the Google authentication or Sign-In flow.
+* Do not change existing working functionality.
+* Keep this implementation lightweight and frontend-focused.
+* Avoid large architectural changes.
+* Make the UI production-like and polished, but keep the implementation simple.
+
+Before making changes, inspect the existing Dashboard and Navbar components and modify only the necessary files.
+After the changes, make sure the application still runs correctly and the Dashboard is responsive on desktop and mobile.
